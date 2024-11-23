@@ -1,0 +1,15 @@
+Import('*')
+
+SimObject('PartitionPolicies.py', sim_objects=[
+    'BasePartitionPolicy', 'CASSOC', 'CPBM', 'MIN_MAX',
+    'HybridPolicy'])
+
+DebugFlag('Filter')
+DebugFlag('SetPartition')
+
+Source('CASSOC.cc')
+Source('base.cc')
+Source('CPBM.cc')
+Source('MIN_MAX.cc')
+Source('hybrid_policy.cc')
+

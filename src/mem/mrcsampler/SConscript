@@ -1,0 +1,11 @@
+Import('*')
+
+SimObject('MrcGenerator.py', sim_objects=[
+    'BaseMrcGenerator', 'RealMrcGenerator', 'AetMrcGenerator',
+    'HybirdGenerator'])
+
+Source("rth.cc")
+Source("mrc.cc")
+Source("base.cc")
+
+
