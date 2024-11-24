@@ -1,0 +1,2 @@
+mem: Merge Mutiple Test Mode
+cpu: Merge Mutiple Test Mode
