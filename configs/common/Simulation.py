@@ -501,7 +501,10 @@ def run(options, root, testsys, cpu_class):
             testsys.cpu[i].max_insts_any_thread = options.maxinsts
 
     if cpu_class:
-        switch_cpus = [cpu_class(switched_out=True, cpu_id=(i), partid=options.criticaltype1 if i == 0 else 16)
+        criticaltype = [options.criticaltype1,
+                        options.criticaltype2, options.criticaltype3]
+        switch_cpus = [cpu_class(switched_out=True, cpu_id=(i),
+                                 partid=criticaltype[i] if i < 3 else 16)
                        for i in range(np)]
 
         for i in range(np):

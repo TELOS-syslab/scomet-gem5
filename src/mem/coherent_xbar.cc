@@ -62,6 +62,7 @@ CoherentXBar::CoherentXBar(const CoherentXBarParams &p)
       maxRoutingTableSizeCheck(p.max_routing_table_size),
       pointOfCoherency(p.point_of_coherency),
       pointOfUnification(p.point_of_unification),
+      mem_port_count(p.port_mem_side_ports_connection_count),
 
       ADD_STAT(snoops, statistics::units::Count::get(), "Total snoops"),
       ADD_STAT(snoopTraffic, statistics::units::Byte::get(), "Total snoop traffic"),
@@ -167,7 +168,9 @@ CoherentXBar::recvTimingReq(PacketPtr pkt, PortID cpu_side_port_id)
         mem_side_port_id = findPort(pkt->getAddrRange());
     else {
         if (AddrRouteTo.find(pkt->getAddr()) == AddrRouteTo.end()) {
-            mem_side_port_id = (cpu_side_port_id < 2) ? cpu_side_port_id : 1;
+            PortID BE_port = mem_port_count - 1;
+            mem_side_port_id =
+            (cpu_side_port_id < BE_port) ? cpu_side_port_id : BE_port;
             AddrRouteTo[pkt->getAddr()] = mem_side_port_id;
         }
         else {
@@ -861,7 +864,9 @@ CoherentXBar::recvAtomicBackdoor(PacketPtr pkt, PortID cpu_side_port_id,
         mem_side_port_id = findPort(pkt->getAddrRange());
     else {
         if (AddrRouteTo.find(pkt->getAddr()) == AddrRouteTo.end()) {
-            mem_side_port_id = (cpu_side_port_id < 2) ? cpu_side_port_id : 1;
+            PortID BE_port = mem_port_count - 1;
+            mem_side_port_id =
+            (cpu_side_port_id < BE_port) ? cpu_side_port_id : BE_port;
             AddrRouteTo[pkt->getAddr()] = mem_side_port_id;
         }
         else {
@@ -1105,7 +1110,9 @@ CoherentXBar::recvFunctional(PacketPtr pkt, PortID cpu_side_port_id)
             dest_id = findPort(pkt->getAddrRange());
         else {
             if (AddrRouteTo.find(pkt->getAddr()) == AddrRouteTo.end()) {
-                dest_id = (cpu_side_port_id < 2) ? cpu_side_port_id : 1;
+                PortID BE_port = mem_port_count - 1;
+                dest_id =
+                (cpu_side_port_id < BE_port) ? cpu_side_port_id : BE_port;
                 AddrRouteTo[pkt->getAddr()] = dest_id;
             }
             else {

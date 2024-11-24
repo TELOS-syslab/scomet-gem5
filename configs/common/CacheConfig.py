@@ -123,7 +123,7 @@ def config_cache(options, system):
         # are not connected using addTwoLevelCacheHierarchy. Use the
         # same clock as the CPUs.
         if options.l3cache:
-            if num_critical_cpu > 8:
+            if num_critical_cpu > 0:
                 system.tollcbus = L3XBar(clk_domain = system.cpu_clk_domain)
                 system.llc0 = l3_cache_class(
                                     **_get_cache_opts('l3c', options))

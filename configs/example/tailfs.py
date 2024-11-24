@@ -133,10 +133,11 @@ def build_test_system(np):
 
     test_sys.init_param = args.init_param
 
+    criticaltype = [args.criticaltype1, args.criticaltype2, args.criticaltype3]
     # For now, assign all the CPUs to the same clock domain
     test_sys.cpu = [
         TestCPUClass(clk_domain=test_sys.cpu_clk_domain,
-                                     cpu_id=i, partid= args.criticaltype1 if i == 0 else 16)
+                        cpu_id=i, partid= criticaltype[i] if i < 3 else 16)
                     for i in range(np)]
 
     if args.ruby:
