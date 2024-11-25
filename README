@@ -41,3 +41,9 @@ https://gem5.googlesource.com/public/gem5-resources/
 If you have questions, please send mail to gem5-users@gem5.org
 
 Enjoy using gem5 and please share your modifications and extensions.
+
+####Pivot
+
+Hardware: Huawei TaiShan 200 (Model 2280)
+
+OS: OpenEuler 5.10.0 (aarch64)
