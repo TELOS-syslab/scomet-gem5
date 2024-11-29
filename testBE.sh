@@ -1,4 +1,5 @@
 ./build/ARM/gem5.opt \
+--debug-flags=MemBWCalc \
 --outdir=m5out/testBE \
 configs/example/tailfs.py \
 -n 8 \
@@ -11,9 +12,9 @@ configs/example/tailfs.py \
 --mem-type=DDR4_2400_8x8 --mem-size="16GB" \
 --bootloader="/home/Resource/binaries/boot.arm64" \
 --kernel="/home/Resource/linux-5.10.137/vmlinux" \
---disk="/home/Resource/testimages/ubuntu-image.img" \
+--disk="/home/zlr/testimages/ubuntu-image.img" \
 --init="/init.addr.gem5" \
 --root-device="/dev/vda2" --machine-type VExpress_GEM5 \
 --script="testbescript.txt" \
---kvm2detail
+--kvm2detail > tmp.txt
 

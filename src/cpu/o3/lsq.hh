@@ -422,11 +422,14 @@ class LSQ
         bool CheckCriticalPC(int ctype, Addr checkPC) {
             if (ctype == -1)
                 return true;
+            // 0 Img-DNN
+            // 1 Masstree
+            // 2 Xapian
+            // 3 Moses
+            // 4 Silo
             Addr ProfiledPC[6][64] =
-            {{0xfffff7df6e08, 0, 0, 0, 0,
-            0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0},
+            {{0xfffff7df6e08, 0xaaaaaaaa8d90, 0xfffff7df6e7c,
+            0xfffff7d76d54, 0xfffff7db34e0},
             {0xaaaaaaab31e8, 0xaaaaaaab9788, 0xaaaaaaab3484,
             0xaaaaaaab5944, 0xaaaaaaab31dc, 0xaaaaaaab3568,
             0xaaaaaaab9df8, 0xaaaaaaab3668, 0xaaaaaaab8054,
@@ -434,8 +437,15 @@ class LSQ
             0xaaaaaaab35bc, 0xaaaaaaab260c},
             {0xffff8000104e6ad4, 0xffff8000104ff054, 0xffff8000104e6ac0,
             0xffff80001077da80, 0xffff8000104ff028, 0xffff800010504274,
-            0xffff80001019212c, 0xffff8000101cdc20}};
-            int length[6] ={1,14,8,0,0,0};
+            0xffff80001019212c, 0xffff8000101cdc20},
+            {0xaaaaaac74de8, 0xaaaaaad20c90, 0xaaaaaacc48a8,
+            0xaaaaaabb46ac, 0xaaaaaabb4768, 0xaaaaaac66008},
+            {0xaaaaaaab2658, 0xaaaaaaab2620, 0xaaaaaaab2808,
+            0xaaaaaab286cc, 0xaaaaaaaf0134, 0xffff8000104e6918,
+            0xffff8000104e6938, 0xaaaaaaaf0754, 0xaaaaaab4da74,
+            0xfffff7b943f0, 0xfffff7b940a4, 0xaaaaaaab264c,
+            0xaaaaaab4da64}};
+            int length[6] ={5,14,8,6,13,0};
             for (int i = 0; i < length[ctype]; i++)
                 if (checkPC == ProfiledPC[ctype][i]) {
                     //printf("%llx Yes!\n", checkPC);
