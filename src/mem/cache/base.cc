@@ -97,6 +97,7 @@ BaseCache::BaseCache(const BaseCacheParams &p, unsigned blk_size)
       forwardLatency(p.tag_latency),
       fillLatency(p.data_latency),
       responseLatency(p.response_latency),
+      MBALatency(p.MBA_latency),
       sequentialAccess(p.sequential_access),
       numTarget(p.tgts_per_mshr),
       forwardSnoops(true),

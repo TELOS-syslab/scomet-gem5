@@ -94,6 +94,8 @@ class MBA : public ClockedObject
          */
         bool recvTimingReq(PacketPtr pkt) override;
 
+        void recvTimingSnoopRsep(PacketPtr pkt);
+
         /**
          * Called by the request port if sendTimingResp was called on this
          * response port (causing recvTimingResp to be called on the request
@@ -153,6 +155,8 @@ class MBA : public ClockedObject
          * Receive a timing response from the response port.
          */
         bool recvTimingResp(PacketPtr pkt) override;
+
+        void recvTimingSnoopReq(PacketPtr pkt);
 
         /**
          * Called by the response port if sendTimingReq was called on this

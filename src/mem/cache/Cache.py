@@ -82,6 +82,7 @@ class BaseCache(ClockedObject):
     tag_latency = Param.Cycles("Tag lookup latency")
     data_latency = Param.Cycles("Data access latency")
     response_latency = Param.Cycles("Latency for the return path on a miss");
+    MBA_latency = Param.Cycles(0, "MBA Partition Latency");
 
     warmup_percentage = Param.Percent(0,
         "Percentage of tags to be touched to warm up the cache")

@@ -112,6 +112,12 @@ MBA::CPUSidePort::recvTimingReq(PacketPtr pkt)
 }
 
 void
+MBA::CPUSidePort::recvTimingSnoopRsep(PacketPtr pkt) {
+    DPRINTF(MBA, "Got Snoop Resp %s\n", pkt->print());
+    owner->memPort.sendTimingSnoopResp(pkt);
+}
+
+void
 MBA::CPUSidePort::recvRespRetry()
 {
     // We should have a blocked packet if this function is called.
@@ -123,10 +129,10 @@ MBA::CPUSidePort::recvRespRetry()
 
     DPRINTF(MBA, "Retrying response pkt %s\n", pkt->print());
     // Try to resend it. It's possible that it fails again.
-    sendPacket(pkt);
-    //owner->schedule(owner->respondEvent, curTick());
+    //sendPacket(pkt);
+    owner->schedule(owner->respondEvent, curTick());
     // We may now be able to accept new packets
-    trySendRetry();
+    //trySendRetry();
 }
 
 bool
@@ -181,6 +187,12 @@ MBA::MemSidePort::recvTimingResp(PacketPtr pkt)
 }
 
 void
+MBA::MemSidePort::recvTimingSnoopReq(PacketPtr pkt) {
+    DPRINTF(MBA, "Got Snoop Req %s\n", pkt->print());
+    owner->cpuPort.sendTimingSnoopReq(pkt);
+}
+
+void
 MBA::MemSidePort::recvReqRetry()
 {
     // We should have a blocked packet if this function is called.
@@ -193,8 +205,8 @@ MBA::MemSidePort::recvReqRetry()
     DPRINTF(MBA, "Retrying request pkt %s\n", pkt->print());
 
     // Try to resend it. It's possible that it fails again.
-    //owner->schedule(owner->nextReqEvent, curTick());
-    sendPacket(pkt);
+    owner->schedule(owner->nextReqEvent, curTick());
+    //sendPacket(pkt);
 }
 
 void
@@ -210,7 +222,7 @@ MBA::handleRequest(PacketPtr pkt)
     DPRINTF(MBA, "Got request for addr %#x\n", pkt->getAddr());
     //TODO handle request
 
-    if (SendingPacket ==nullptr) {
+    if (SendingPacket == nullptr) {
         SendingPacket = pkt;
    } else {
         return false;
@@ -228,7 +240,7 @@ MBA::handleResponse(PacketPtr pkt)
     //if we can deal packet return true else return false
     DPRINTF(MBA, "Got response for addr %#x\n", pkt->getAddr());
     //TODO handle request
-    if (ResponsingPacket != nullptr) {
+    if (ResponsingPacket == nullptr) {
         ResponsingPacket = pkt;
     } else {
         return false;
@@ -239,7 +251,7 @@ MBA::handleResponse(PacketPtr pkt)
     return true;
 }
 
-void MBA::sendResponse(PacketPtr pkt)
+/*void MBA::sendResponse(PacketPtr pkt)
 {
     DPRINTF(MBA, "Sending resp for addr %#x\n", pkt->getAddr());
 
@@ -254,7 +266,7 @@ void MBA::sendResponse(PacketPtr pkt)
     //if we are able to get more infomation trysendretry
     cpuPort.trySendRetry();
     //memPort.trySendRetry();
-}
+}*/
 
 Tick
 MBA::handleAtomic(PacketPtr pkt){

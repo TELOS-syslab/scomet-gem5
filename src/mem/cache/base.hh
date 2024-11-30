@@ -916,6 +916,9 @@ class BaseCache : public ClockedObject
      */
     const Cycles responseLatency;
 
+    const Cycles MBALatency;
+
+
     /**
      * Whether tags and data are accessed sequentially.
      */

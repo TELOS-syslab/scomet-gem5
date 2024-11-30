@@ -255,13 +255,14 @@ def config_mem(options, system):
             # for each vault. All vaults are same size.
             mem_ctrls[i].dram.device_size = options.hmc_dev_vault_size
         else:
-            # Connect the controllers to the membus
-            #mem_ctrls[i].port = xbar.mem_side_ports
-            system.membandwidth_ctrl = m5.objects.MemBandwidthCtrl()
-            mem_ctrls[i].port = system.membandwidth_ctrl.mem_side
-            mem_ctrls[i].qos_priorities = 2
-            #mem_ctrls[i].qos_priority_escalation = True
-            #mem_ctrls[i].qos_syncro_scheduler = True
-            system.membandwidth_ctrl.cpu_side = xbar.mem_side_ports
+            Test_mode = getattr(options, 'test_mode')
+            if (Test_mode == 'Pivot'):
+                system.membandwidth_ctrl = m5.objects.MemBandwidthCtrl()
+                mem_ctrls[i].port = system.membandwidth_ctrl.mem_side
+                mem_ctrls[i].qos_priorities = 2
+                system.membandwidth_ctrl.cpu_side = xbar.mem_side_ports
+            else:
+                mem_ctrls[i].qos_priorities = 2
+                mem_ctrls[i].port = xbar.mem_side_ports
 
     subsystem.mem_ctrls = mem_ctrls
