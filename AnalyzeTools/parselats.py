@@ -46,4 +46,3 @@ if __name__ == '__main__':
 
     latsFile = sys.argv[1]
     getLatPct(latsFile)
-        
