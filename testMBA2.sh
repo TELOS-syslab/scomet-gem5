@@ -7,7 +7,7 @@ configs/example/tailfs.py \
 --cpu-type=ArmV8KvmCPU \
 --latency_critical_num=1 \
 --test_mode="MBA" \
---MBACtrl=40 \
+--MBACtrl="10%" \
 --l1d_size="64kB" --l1d_assoc=4 --l1i_size="64kB" --l1i_assoc=4 \
 --l2_size="512kB" --l2_assoc=8 \
 --l3c_size="7680kB" --l3c_assoc=15 \
@@ -18,6 +18,6 @@ configs/example/tailfs.py \
 --disk="/home/zlr/testimages/ubuntu-image.img" \
 --init="/init.addr.gem5" \
 --root-device="/dev/vda2" --machine-type VExpress_GEM5 \
---script="testbescript.txt" \
+--script="testmbascript2.txt" \
 --kvm2detail > tmp.txt
 

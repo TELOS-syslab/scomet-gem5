@@ -117,6 +117,9 @@ def config_cache(options, system):
 
     num_critical_cpu = getattr(options, 'latency_critical_num')
     
+    MBAdict = {'100%': 0, '90%': 30, '80%': 60, '70%': 90,
+               '60%': 120, '50%': 150, '40%': 180, '30%': 210,
+               '20%': 240, '10%': 270, '0%': 300}
     #Shared llc
     if options.l2cache or options.l3cache:
         # Provide a clock for the L2 and the L1-to-L2 bus here as they
@@ -137,8 +140,8 @@ def config_cache(options, system):
                 if (Test_mode == 'MBA'):
                     MBACtrl = getattr(options, 'MBACtrl')
                 #    system.MBA = m5.objects.MBA()
-                    MBACycles = MBACtrl
-                    system.llc1.tag_latency += MBACtrl
+                    MBACycles = MBAdict[MBACtrl]
+                    system.llc1.tag_latency += MBACycles
                 #    system.MBA.mem_side = system.membus.cpu_side_ports
                 #else:
                 '''
