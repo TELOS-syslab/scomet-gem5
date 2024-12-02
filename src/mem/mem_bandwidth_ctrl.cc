@@ -386,8 +386,11 @@ MemBandwidthCtrl::handleRequest(PacketPtr pkt)
 
     if (Partition_Mode == BW_Priority) {
         PARTID BW_partid = pkt->requestorId();
-        int Pri = 1 - pkt->qosValue();
-
+        int Pri;
+        if (pkt->qosValue() || pkt->MPAMqos())
+            Pri = 0;
+        else
+            Pri = 1;
         //printf("Mem QoS %d\n", pkt->qosValue());
         while (Cur_Len[Pri] == QoS_Len[Pri] && Pri < QoS_Type) 
             Pri++;
@@ -407,9 +410,6 @@ MemBandwidthCtrl::handleRequest(PacketPtr pkt)
             DPRINTF(MemBWCtrlQueue, "MemBandwidthCtrl Queue QoS 1 Len %d\n", Cur_Len[0]);
             DPRINTF(MemBWCtrlQueue, "MemBandwidthCtrl Queue QoS 0 Len %d\n", Cur_Len[1] + Cur_Len[2] + Cur_Len[3]);
         }
-
-        if (Test_Mode == 0)
-            pkt->qosValue(0);
     }
 
     if (Partition_Mode == BW_Portion) {

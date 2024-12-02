@@ -547,6 +547,7 @@ Cache::createMissPacket(PacketPtr cpu_pkt, CacheBlk *blk,
     PacketPtr pkt = new Packet(cpu_pkt->req, cmd, blkSize);
 
     pkt->qosValue(cpu_pkt->qosValue());
+    pkt->MPAMqos(cpu_pkt->MPAMqos());
 
     // if there are upstream caches that have already marked the
     // packet as having sharers (not passing writable), pass that info

@@ -135,7 +135,7 @@ def build_test_system(np):
 
     criticaltype = [args.criticaltype1, args.criticaltype2, args.criticaltype3]
     # For now, assign all the CPUs to the same clock domain
-    Test_mode = getattr(options, 'test_mode')
+    Test_mode = args.test_mode
     if Test_mode == 'MPAM':
         criticaltype = [15,15,15]
     test_sys.cpu = [

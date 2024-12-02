@@ -1,2 +1,0 @@
-#!/bin/bash -x
-sh /home/zlr/test1be.sh

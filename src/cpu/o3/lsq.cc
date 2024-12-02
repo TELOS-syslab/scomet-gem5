@@ -1236,8 +1236,13 @@ LSQ::SingleDataRequest::buildPackets()
         PacketPtr pkt;
         if (isLoad()) {
             pkt = Packet::createRead(req());
-            if (_inst->cpuId() == 0 && CheckCriticalPC(_inst->cpu->getCriticalType(), _inst->pcState().instAddr())) {
-                pkt->qosValue(1);
+            if (_inst->cpuId() == 0 &&
+            CheckCriticalPC(_inst->cpu->getCriticalType(),
+                            _inst->pcState().instAddr())) {
+                if (_inst->cpu->getCriticalType() == -2)
+                    pkt->MPAMqos(1);
+                else
+                    pkt->qosValue(1);
                 DPRINTF(CriticalReport, "LQ %s\n", pkt->print());
             }
             //DPRINTF(CheckPartID, "Now cpu id: %d\n", _inst->cpuId());
@@ -1282,8 +1287,14 @@ LSQ::SplitDataRequest::buildPackets()
         if (isLoad()) {
             _mainPacket = Packet::createRead(_mainReq);
             _mainPacket->dataStatic(_inst->memData);
-            if (_inst->cpuId() == 0 && CheckCriticalPC(_inst->cpu->getCriticalType(), _inst->pcState().instAddr()))
-                _mainPacket->qosValue(1);
+            if (_inst->cpuId() == 0 &&
+            CheckCriticalPC(_inst->cpu->getCriticalType(),
+                            _inst->pcState().instAddr())) {
+                if (_inst->cpu->getCriticalType() == -2)
+                    _mainPacket->MPAMqos(1);
+                else
+                    _mainPacket->qosValue(1);
+            }
             // hardware transactional memory
             // If request originates in a transaction,
             // packet should be marked as such
@@ -1304,10 +1315,15 @@ LSQ::SplitDataRequest::buildPackets()
             PacketPtr pkt;
             if (isLoad()) {
                 pkt = Packet::createRead(req);
-                if (_inst->cpuId() == 0 && CheckCriticalPC(_inst->cpu->getCriticalType(), _inst->pcState().instAddr()))
-                    pkt->qosValue(1);
-            }
-            else {
+                if (_inst->cpuId() == 0 &&
+                CheckCriticalPC(_inst->cpu->getCriticalType(),
+                                _inst->pcState().instAddr())) {
+                    if (_inst->cpu->getCriticalType() == -2)
+                        pkt->MPAMqos(1);
+                    else
+                        pkt->qosValue(1);
+                }
+            } else {
                 pkt = Packet::createWrite(req);
                 /*if (_inst->cpuId() == 7)
                     pkt->qosValue(1);*/

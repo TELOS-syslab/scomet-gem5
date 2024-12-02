@@ -401,6 +401,8 @@ class Packet : public Printable
     // Quality of Service priority value
     uint8_t _qosValue;
 
+    uint8_t _MPAMqos;
+
     // hardware transactional memory
 
     /**
@@ -764,6 +766,9 @@ class Packet : public Printable
      */
     inline uint8_t qosValue() const { return _qosValue; }
 
+    inline uint8_t MPAMqos() const { return _MPAMqos; }
+
+
     /**
      * QoS Value setter
      * Interface for setting QoS priority value of the packet.
@@ -772,6 +777,9 @@ class Packet : public Printable
      */
     inline void qosValue(const uint8_t qos_value)
     { _qosValue = qos_value; }
+
+    inline void MPAMqos(const uint8_t qos_value)
+    { _MPAMqos = qos_value; }
 
     inline RequestorID requestorId() const { return req->requestorId(); }
 
@@ -861,6 +869,7 @@ class Packet : public Printable
         :  cmd(_cmd), id((PacketId)_req.get()), req(_req),
            data(nullptr), addr(0), _isSecure(false), size(0),
            _qosValue(0),
+           _MPAMqos(0),
            htmReturnReason(HtmCacheFailure::NO_FAIL),
            htmTransactionUid(0),
            headerDelay(0), snoopDelay(0),
@@ -902,6 +911,7 @@ class Packet : public Printable
         :  cmd(_cmd), id(_id ? _id : (PacketId)_req.get()), req(_req),
            data(nullptr), addr(0), _isSecure(false),
            _qosValue(0),
+           _MPAMqos(0),
            htmReturnReason(HtmCacheFailure::NO_FAIL),
            htmTransactionUid(0),
            headerDelay(0),
@@ -930,6 +940,7 @@ class Packet : public Printable
            addr(pkt->addr), _isSecure(pkt->_isSecure), size(pkt->size),
            bytesValid(pkt->bytesValid),
            _qosValue(pkt->qosValue()),
+           _MPAMqos(pkt->MPAMqos()),
            htmReturnReason(HtmCacheFailure::NO_FAIL),
            htmTransactionUid(0),
            headerDelay(pkt->headerDelay),

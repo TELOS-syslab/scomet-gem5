@@ -1,13 +1,13 @@
 #!/bin/bash
 
 ./build/ARM/gem5.opt \
---outdir=m5out/MBAimgdnn \
+--outdir=m5out/Pivotimgdnn \
 configs/example/tailfs.py \
 -n 8 \
 --caches --l2cache --l3cache \
 --cpu-type=ArmV8KvmCPU \
 --latency_critical_num=1 \
---criticalytype1=0 \
+--criticaltype1=0 \
 --test_mode="Pivot" \
 --l1d_size="64kB" --l1d_assoc=4 --l1i_size="64kB" --l1i_assoc=4 \
 --l2_size="512kB" --l2_assoc=8 \
@@ -23,7 +23,7 @@ configs/example/tailfs.py \
 --kvm2detail > /dev/null 2>&1 &
 pid=$!
 
-sleep 1000
+sleep 900
 
 ps -p $pid > /dev/null && kill -INT $pid
 

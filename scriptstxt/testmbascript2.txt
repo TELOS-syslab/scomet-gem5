@@ -1,3 +1,0 @@
-#!/bin/bash -x
-sh /home/zlr/testMBA2.sh
-#/sbin/m5 --addr 0x10010000 exit

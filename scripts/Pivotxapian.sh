@@ -1,13 +1,14 @@
 #!/bin/bash
 
 ./build/ARM/gem5.opt \
---outdir=m5out/MPAMimgdnn \
+--outdir=m5out/Pivotxapian \
 configs/example/tailfs.py \
--n 3 \
+-n 8 \
 --caches --l2cache --l3cache \
 --cpu-type=ArmV8KvmCPU \
 --latency_critical_num=1 \
---test_mode="MPAM" \
+--criticaltype1=2 \
+--test_mode="Pivot" \
 --l1d_size="64kB" --l1d_assoc=4 --l1i_size="64kB" --l1i_assoc=4 \
 --l2_size="512kB" --l2_assoc=8 \
 --l3c_size="7680kB" --l3c_assoc=15 \
@@ -18,7 +19,7 @@ configs/example/tailfs.py \
 --disk="/home/zlr/testimages/ubuntu-image.img" \
 --init="/init.addr.gem5" \
 --root-device="/dev/vda2" --machine-type VExpress_GEM5 \
---script="scriptstxt/MPAMimgdnn.txt" \
+--script="scriptstxt/Pivotxapian.txt" \
 --kvm2detail > /dev/null 2>&1 &
 pid=$!
 

@@ -1,1 +1,1 @@
-python3 $(which scons) build/ARM/gem5.opt -j32 --install-hooks
+python3 $(which scons) build/ARM/gem5.opt -j16 --install-hooks

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ./build/ARM/gem5.opt \
---outdir=m5out/MPAMimgdnn \
+--outdir=m5out/MPAMmoses \
 configs/example/tailfs.py \
 -n 3 \
 --caches --l2cache --l3cache \
@@ -18,7 +18,7 @@ configs/example/tailfs.py \
 --disk="/home/zlr/testimages/ubuntu-image.img" \
 --init="/init.addr.gem5" \
 --root-device="/dev/vda2" --machine-type VExpress_GEM5 \
---script="scriptstxt/MPAMimgdnn.txt" \
+--script="scriptstxt/MPAMmoses.txt" \
 --kvm2detail > /dev/null 2>&1 &
 pid=$!
 

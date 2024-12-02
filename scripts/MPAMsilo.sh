@@ -1,9 +1,9 @@
 #!/bin/bash
 
 ./build/ARM/gem5.opt \
---outdir=m5out/MPAMimgdnn \
+--outdir=m5out/MPAMsilo \
 configs/example/tailfs.py \
--n 3 \
+-n 4 \
 --caches --l2cache --l3cache \
 --cpu-type=ArmV8KvmCPU \
 --latency_critical_num=1 \
@@ -18,7 +18,7 @@ configs/example/tailfs.py \
 --disk="/home/zlr/testimages/ubuntu-image.img" \
 --init="/init.addr.gem5" \
 --root-device="/dev/vda2" --machine-type VExpress_GEM5 \
---script="scriptstxt/MPAMimgdnn.txt" \
+--script="scriptstxt/MPAMsilo.txt" \
 --kvm2detail > /dev/null 2>&1 &
 pid=$!
 
