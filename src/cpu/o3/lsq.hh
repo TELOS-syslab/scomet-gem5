@@ -421,6 +421,8 @@ class LSQ
 
         bool CheckCriticalPC(int ctype, Addr checkPC) {
             if (ctype == -1)
+                return false;
+            if (ctype == -2)
                 return true;
             // 0 Img-DNN
             // 1 Masstree

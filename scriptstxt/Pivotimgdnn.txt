@@ -1,0 +1,2 @@
+#!/bin/bash -x
+./home/zlr/Pivotimgdnn70.sh

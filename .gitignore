@@ -1,5 +1,5 @@
 build
-PivotResult
+PivotResult/*
 parser.out
 parsetab.py
 cscope.files

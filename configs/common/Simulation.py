@@ -503,6 +503,9 @@ def run(options, root, testsys, cpu_class):
     if cpu_class:
         criticaltype = [options.criticaltype1,
                         options.criticaltype2, options.criticaltype3]
+        Test_mode = getattr(options, 'test_mode')
+        if Test_mode == 'MPAM':
+            criticaltype = [15,15,15]
         switch_cpus = [cpu_class(switched_out=True, cpu_id=(i),
                                  partid=criticaltype[i] if i < 3 else 16)
                        for i in range(np)]

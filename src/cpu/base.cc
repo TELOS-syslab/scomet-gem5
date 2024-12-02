@@ -145,6 +145,8 @@ BaseCPU::BaseCPU(const Params &p, bool is_checker)
     // if Python did not provide a valid ID, do it here
     if (_partid == 16)
         CriticalType = -1;
+    else if (_partid == 15)
+        CriticalType = -2;
     else
         CriticalType = _partid;
     if (_cpuId == -1 ) {

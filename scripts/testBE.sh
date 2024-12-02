@@ -1,11 +1,12 @@
+#!/bin/bash
+
 ./build/ARM/gem5.opt \
---debug-flags=MemBWCalc \
---outdir=m5out/testPivot \
+--outdir=m5out/testBE \
 configs/example/tailfs.py \
 -n 8 \
 --caches --l2cache --l3cache \
 --cpu-type=ArmV8KvmCPU \
---latency_critical_num=1 \
+--latency_critical_num=0 \
 --l1d_size="64kB" --l1d_assoc=4 --l1i_size="64kB" --l1i_assoc=4 \
 --l2_size="512kB" --l2_assoc=8 \
 --l3c_size="7680kB" --l3c_assoc=15 \
@@ -16,6 +17,11 @@ configs/example/tailfs.py \
 --disk="/home/zlr/testimages/ubuntu-image.img" \
 --init="/init.addr.gem5" \
 --root-device="/dev/vda2" --machine-type VExpress_GEM5 \
---script="testbescript.txt" \
---kvm2detail > tmp.txt
+--script="scriptstxt/testbescript.txt" \
+--kvm2detail > /dev/null 2>&1 &
+pid=$!
+
+sleep 1000
+
+ps -p $pid > /dev/null && kill -INT $pid
 

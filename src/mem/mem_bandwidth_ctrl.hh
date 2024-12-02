@@ -274,6 +274,7 @@ class MemBandwidthCtrl : public ClockedObject
     uint64_t BandwidthCounter;
     Tick LastCountTime;
     int Partition_Mode;
+    int Test_Mode;
     int TDM_Len_Max;
     int PartID_with_Tick[Time_Slice];
 

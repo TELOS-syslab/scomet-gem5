@@ -256,8 +256,10 @@ def config_mem(options, system):
             mem_ctrls[i].dram.device_size = options.hmc_dev_vault_size
         else:
             Test_mode = getattr(options, 'test_mode')
-            if (Test_mode == 'Pivot'):
+            if (Test_mode == 'Pivot' or Test_mode == 'MPAM'):
                 system.membandwidth_ctrl = m5.objects.MemBandwidthCtrl()
+                if (Test_mode == 'Pivot'):
+                    system.membandwidth_ctrl.Test_Mode = 1
                 mem_ctrls[i].port = system.membandwidth_ctrl.mem_side
                 mem_ctrls[i].qos_priorities = 2
                 system.membandwidth_ctrl.cpu_side = xbar.mem_side_ports

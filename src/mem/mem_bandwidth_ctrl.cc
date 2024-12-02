@@ -24,6 +24,7 @@ MemBandwidthCtrl::MemBandwidthCtrl(const MemBandwidthCtrlParams &params) :
     Write_Threshold(params.Write_Threshold),
     Time_Threshold(params.Time_Threshold),
     Partition_Mode(params.Partition_Mode),
+    Test_Mode(params.Test_Mode),
     TDM_Len_Max(params.TDM_Len_Max),
     BWCtrl_State(BWCTRL_READ_STATE),
     Mem_Bandwidth_Monitor_Window(params.Mem_Bandwidth_Monitor_Window),
@@ -407,7 +408,8 @@ MemBandwidthCtrl::handleRequest(PacketPtr pkt)
             DPRINTF(MemBWCtrlQueue, "MemBandwidthCtrl Queue QoS 0 Len %d\n", Cur_Len[1] + Cur_Len[2] + Cur_Len[3]);
         }
 
-        //pkt->qosValue(0);
+        if (Test_Mode == 0)
+            pkt->qosValue(0);
     }
 
     if (Partition_Mode == BW_Portion) {

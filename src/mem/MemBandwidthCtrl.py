@@ -15,8 +15,10 @@ class MemBandwidthCtrl(ClockedObject):
     QoS_Queue_Len_M = Param.Unsigned(64, "QoS_queue_Len_M")
     QoS_Queue_Len_L = Param.Unsigned(96, "QoS_queue_Len_L")
     Write_Threshold = Param.Unsigned(8, "Write_Threshold")
-    Time_Threshold = Param.Unsigned(4440000, "Write_Threshold")
+    Time_Threshold = Param.Unsigned(8000, "Write_Threshold")
     TDM_Len_Max = Param.Unsigned(8, "TD_Len_Max")
 
     Partition_Mode = Param.Unsigned(1, "Partition_Mode")
-    Mem_Bandwidth_Monitor_Window = Param.Unsigned(5000000, "Mem_Bandwidth_Monitor_Window")
+    Test_Mode = Param.Unsigned(0, "Test_Mode")
+    Mem_Bandwidth_Monitor_Window=Param.Unsigned(100000000,
+                                                "Mem_Bandwidth_Monitor_Window")
