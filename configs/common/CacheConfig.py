@@ -117,7 +117,7 @@ def config_cache(options, system):
 
     num_critical_cpu = getattr(options, 'latency_critical_num')
     
-    MBAdict = {'100%': 0, '90%': 15, '80%': 40, '70%': 65,
+    MBAdict = {'100%': 0, '90%': 15, '80%': 40, '70%': 75,
                '60%': 100, '50%': 150, '40%': 220, '30%': 350,
                '20%': 600, '10%': 1000}
     #Determinied by the average memory access latency (About 150 cycles)

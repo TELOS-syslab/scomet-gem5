@@ -3,7 +3,7 @@
 ./build/ARM/gem5.opt \
 --outdir=m5out/MPAMsilo \
 configs/example/tailfs.py \
--n 4 \
+-n 5 \
 --caches --l2cache --l3cache \
 --cpu-type=ArmV8KvmCPU \
 --latency_critical_num=1 \
@@ -15,7 +15,7 @@ configs/example/tailfs.py \
 --mem-type=DDR4_2400_8x8 --mem-size="16GB" \
 --bootloader="/home/Resource/binaries/boot.arm64" \
 --kernel="/home/Resource/linux-5.10.137/vmlinux" \
---disk="/home/zlr/testimages/ubuntu-image.img" \
+--disk="/home/Resource/testimages/ubuntu-image.img" \
 --init="/init.addr.gem5" \
 --root-device="/dev/vda2" --machine-type VExpress_GEM5 \
 --script="scriptstxt/MPAMsilo.txt" \

@@ -13,14 +13,10 @@ def getIPC(file_path):
                     ipc_lines.append(line.strip())
                     parts = line.split("                     ")
                     if len(parts) >= 2:
+                        #core 0 is not used to run BE Tasks
                         if '0' not in parts[0]:
                             ipc_value += float(parts[1])
-                            print(parts[1])
-
-        if ipc_value:
-            print(f"\nIPC:{ipc_value}")
-        else:
-            print("\nNo IPC Found")
+        print(ipc_value)
         return ipc_value
 
     except FileNotFoundError:
@@ -30,5 +26,5 @@ def getIPC(file_path):
 
 
 statsFile = sys.argv[1]
-print(sys.argv)
+#print(sys.argv)
 BE_ThroughPut = getIPC(statsFile)

@@ -15,14 +15,14 @@ configs/example/tailfs.py \
 --mem-type=DDR4_2400_8x8 --mem-size="16GB" \
 --bootloader="/home/Resource/binaries/boot.arm64" \
 --kernel="/home/Resource/linux-5.10.137/vmlinux" \
---disk="/home/zlr/testimages/ubuntu-image.img" \
+--disk="/home/Resource/testimages/ubuntu-image.img" \
 --init="/init.addr.gem5" \
 --root-device="/dev/vda2" --machine-type VExpress_GEM5 \
 --script="scriptstxt/MPAMxapian.txt" \
 --kvm2detail > /dev/null 2>&1 &
 pid=$!
 
-sleep 1800
+sleep 900
 
 ps -p $pid > /dev/null && kill -INT $pid
 

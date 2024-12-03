@@ -41,8 +41,9 @@ if __name__ == '__main__':
         f.close()
         p95 = stats.scoreatpercentile(sjrnTimes, 95)
         maxLat = max(sjrnTimes)
-        print ("95th percentile latency %.3f ms | max latency %.3f ms" \
-                % (p95, maxLat))
+        #print ("95th percentile latency %.3f ms | max latency %.3f ms" \
+        #        % (p95, maxLat))
+        print(p95)
 
     latsFile = sys.argv[1]
     getLatPct(latsFile)

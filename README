@@ -42,8 +42,25 @@ If you have questions, please send mail to gem5-users@gem5.org
 
 Enjoy using gem5 and please share your modifications and extensions.
 
-####Pivot
+###############################################################################
+Pivot
 
-Hardware: Huawei TaiShan 200 (Model 2280)
+Hardware Environment: Huawei TaiShan 200 (Model 2280)
 
-OS: OpenEuler 21.09 (aarch64)
+Software Environment: OpenEuler 21.09 (aarch64)
+
+Use "./EvaluatePivot.sh BE" to get the baseline throughput
+  
+Use "./EvaluatePivot.sh Pivot" to get Pivot's result
+
+Use "./EvaluatePivot.sh MPAM" to get ARM MPAM's result
+
+Use "./EvaluatePivot.sh MBA" to get Intel MBA's result
+
+Use "./EvaluatePivot.sh" to get all results list above
+
+After getting the evaluation results, Use "./Analyze.sh" to draw the figure.
+
+This artifact compares Pivot against the mordern bandwidth partitioning mechanisms in data center and shows the key experiment in figure 3. 
+
+Additionally, all machanisms do not lead to QoS violation. Check the data in the "Result" Folder to get the results of tail latency.
