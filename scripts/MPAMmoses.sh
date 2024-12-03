@@ -22,7 +22,7 @@ configs/example/tailfs.py \
 --kvm2detail > /dev/null 2>&1 &
 pid=$!
 
-sleep 1800
+sleep 90000
 
 ps -p $pid > /dev/null && kill -INT $pid
 

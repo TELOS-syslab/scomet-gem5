@@ -49,6 +49,8 @@ Hardware Environment: Huawei TaiShan 200 (Model 2280)
 
 Software Environment: OpenEuler 21.09 (aarch64)
 
+Use "./make.sh" to build gem5
+
 Use "./EvaluatePivot.sh BE" to get the baseline throughput
   
 Use "./EvaluatePivot.sh Pivot" to get Pivot's result
