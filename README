@@ -47,15 +47,15 @@ Pivot
 
 Hardware Environment: Huawei TaiShan 200 (Model 2280)
 
-Software Environment: OpenEuler 21.09 (aarch64)
+Software Environment: OpenEuler 21.09 (aarch64) with KVM
 
-Use "./make.sh" to build gem5
+Use "./make.sh" to download resource for Pivot and build gem5 simulator.
 
-Use "./EvaluatePivot.sh BE" to get the baseline throughput
+Use "./EvaluatePivot.sh BE" to get the baseline throughput.
   
-Use "./EvaluatePivot.sh Pivot" to get Pivot's result
+Use "./EvaluatePivot.sh Pivot" to get Pivot's result.
 
-Use "./EvaluatePivot.sh MPAM" to get ARM MPAM's result
+Use "./EvaluatePivot.sh MPAM" to get ARM MPAM's resul.t
 
 Use "./EvaluatePivot.sh MBA" to get Intel MBA's result
 

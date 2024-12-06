@@ -14,9 +14,9 @@ configs/example/tailfs.py \
 --l3c_size="7680kB" --l3c_assoc=15 \
 --l3b_size="512kB" --l3b_assoc=1 \
 --mem-type=DDR4_2400_8x8 --mem-size="16GB" \
---bootloader="/home/Resource/binaries/boot.arm64" \
---kernel="/home/Resource/linux-5.10.137/vmlinux" \
---disk="/home/Resource/testimages/ubuntu-image.img" \
+--bootloader="Resource/binaries/boot.arm64" \
+--kernel="Resource/linux-5.10.137/vmlinux" \
+--disk="Resource/testimages/ubuntu-image.img" \
 --init="/init.addr.gem5" \
 --root-device="/dev/vda2" --machine-type VExpress_GEM5 \
 --script="scriptstxt/Pivotmoses.txt" \
