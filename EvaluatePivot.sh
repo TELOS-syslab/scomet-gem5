@@ -2,7 +2,7 @@
 
 if [ -z "$1" ]; then
     echo "Test All..."
-    ./scripts/testBE.sh &
+    ./scripts/testBE.sh
     ./scripts/Pivotsilo.sh &
     ./scripts/Pivotimgdnn.sh &
     ./scripts/Pivotmoses.sh &
