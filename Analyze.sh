@@ -29,4 +29,7 @@ python3 AnalyzeTools/txttocsv.py Result/BE.txt Result/BE.csv BE
 python3 AnalyzeTools/txttocsv.py Result/BE.txt Result/NormBE.csv Norm
 python3 AnalyzeTools/txttocsv.py Result/95thlats.txt Result/95thlats.csv Lats
 python3 AnalyzeTools/draw.py Result/NormBE.csv Result/Figure3.pdf
+<<<<<<< HEAD
 
+=======
+>>>>>>> 932305595c2973d35df3e734affb13d7efb14a58
