@@ -1,7 +1,8 @@
 build
+Resource.tar.gz
 Resource
+Result
 PivotResult/*
-Result/*
 parser.out
 parsetab.py
 cscope.files
