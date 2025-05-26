@@ -44,7 +44,7 @@ from m5.objects.QoSMemCtrl import *
 
 # Enum for memory scheduling algorithms, currently First-Come
 # First-Served and a First-Row Hit then First-Come First-Served
-class MemSched(Enum): vals = ['fcfs', 'frfcfs']
+class MemSched(Enum): vals = ['fcfs', 'frfcfs', 'frfcfscap']
 
 # MemCtrl is a single-channel single-ported Memory controller model
 # that aims to model the most important system-level performance
@@ -83,7 +83,7 @@ class MemCtrl(QoSMemCtrl):
                                            "switching to writes")
 
     # scheduler, address map and page policy
-    mem_sched_policy = Param.MemSched('frfcfs', "Memory scheduling policy")
+    mem_sched_policy = Param.MemSched('frfcfscap', "Memory scheduling policy")
 
     # pipeline latency of the controller and PHY, split into a
     # frontend part and a backend part, with reads and writes serviced

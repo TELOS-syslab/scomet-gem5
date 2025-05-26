@@ -1,0 +1,23 @@
+Global frequency set at 1000000000000 ticks per second
+requestor writebacks, id 0
+requestor functional, id 1
+requestor interrupt, id 2
+requestor cpu0.mmu.dtb.walker, id 3
+requestor cpu0.mmu.itb.walker, id 4
+requestor cpu0.inst, id 5
+requestor cpu0.data, id 6
+requestor cpu1.mmu.dtb.walker, id 7
+requestor cpu1.mmu.itb.walker, id 8
+requestor cpu1.inst, id 9
+requestor cpu1.data, id 10
+gem5 Simulator System.  https://www.gem5.org
+gem5 is copyrighted software; use the --copyright option for details.
+
+gem5 version 22.0.0.2
+gem5 compiled May 10 2025 23:04:10
+gem5 started May 11 2025 17:03:12
+gem5 executing on 87ec59bb7360, pid 156
+command line: build/X86/gem5.opt configs/example/se.py -n=2 --env=/home/llj/Pivot/mastreeenv.txt '--cmd=/home/llj/Tailbench/tailbench/masstree/mttest_gem5se;/home/llj/dockerspec/benchspec/CPU/519.lbm_r/run/run_base_refrate_mytest-m64.0000/lbm_r_base.mytest-m64' '--options=-j1 mycsba masstree -s1;3000 /home/llj/dockerspec/benchspec/CPU/519.lbm_r/run/run_base_refrate_mytest-m64.0000/eference.dat 0 0 /home/llj/dockerspec/benchspec/CPU/519.lbm_r/run/run_base_refrate_mytest-m64.0000/100_100_130_ldc.of' --cpu-type=X86O3CPU --caches --l2cache --l3cache --l1d_size=64kB --l1d_assoc=4 --l1i_size=64kB --l1i_assoc=4 --l2_size=512kB --l2_assoc=8 --l3_size=4MB --mem-type=DDR5_6400_4x8 --mem-size=16GB
+
+**** REAL SIMULATION ****
+Exiting @ tick 172206000 because user interrupt received

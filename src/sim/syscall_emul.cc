@@ -71,7 +71,7 @@ unimplementedFunc(SyscallDesc *desc, ThreadContext *tc)
 SyscallReturn
 ignoreFunc(SyscallDesc *desc, ThreadContext *tc)
 {
-    warn("ignoring syscall %s(...)", desc->name());
+    //warn("ignoring syscall %s(...)", desc->name());
     return 0;
 }
 

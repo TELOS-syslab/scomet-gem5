@@ -1,0 +1,18 @@
+for gem5
+
+apt update
+apt install build-essential git m4 scons zlib1g zlib1g-dev libprotobuf-dev protobuf-compiler libprotoc-dev libgoogle-perftools-dev python-dev python
+apt install git build-essential python3-dev libprotobuf-dev protobuf-compiler libgoogle-perftools-dev libboost-all-dev
+
+git config --global --add safe.directory /home/llj/Pivot
+python3.6 `which scons` build/X86/gem5.opt -j80
+
+for tailbench
+sudo apt-get -y install software-properties-common
+add-apt-repository "deb http://security.ubuntu.com/ubuntu xenial-security main"
+apt-get update
+apt -y install openjdk-17-jdk
+apt-get -y --assume-yes install gcc automake autoconf libtool bison swig build-essential vim python3.7 pkg-config python3-pip zlib1g-dev uuid-dev libboost-all-dev cmake libgtk2.0-dev pkg-config libqt4-dev unzip wget libjasper-dev libpng-dev libjpeg-dev libtiff5-dev libgdk-pixbuf2.0-dev libopenexr-dev libbz2-dev tk-dev tcl-dev g++ git subversion automake libtool zlib1g-dev libicu-dev libboost-all-dev liblzma-dev python-dev graphviz imagemagick make cmake libgoogle-perftools-dev autoconf doxygen libgtop2-dev libncurses-dev ant libnuma-dev libmysqld-dev libaio-dev libjemalloc-dev libdb5.3++-dev libreadline-dev
+apt install python3-opencv libopencv-dev python3-numpy python3-matplotlib python3-pandas
+apt install python3-sphinx pocketsphinx libpocketsphinx-dev libsphinxbase-dev
+apt install python3-xapian libxapian-dev

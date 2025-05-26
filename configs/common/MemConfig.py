@@ -219,6 +219,7 @@ def config_mem(options, system):
 
                 # Create the controller that will drive the interface
                 mem_ctrl = dram_intf.controller()
+                dram_intf.dual_row_buffer = options.dualRowBuffer
 
                 mem_ctrls.append(mem_ctrl)
 

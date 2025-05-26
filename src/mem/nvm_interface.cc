@@ -205,8 +205,97 @@ NVMInterface::decodePacket(const PacketPtr pkt, Addr pkt_addr,
 }
 
 std::pair<MemPacketQueue::iterator, Tick>
+NVMInterface::chooseNextFCFS(MemPacketQueue& queue, Tick min_col_at) const
+{
+    // remember if we found a hit, but one that cannit issue seamlessly
+    bool found_prepped_pkt = false;
+
+    auto selected_pkt_it = queue.end();
+    Tick selected_col_at = MaxTick;
+
+    for (auto i = queue.begin(); i != queue.end() ; ++i) {
+        MemPacket* pkt = *i;
+        if (!pkt->isDram()) {
+            const Bank& bank = ranks[pkt->rank]->banks[pkt->bank];
+            const Tick col_allowed_at = pkt->isRead() ? bank.rdAllowedAt :
+                                                        bank.wrAllowedAt;
+            if (burstReady(pkt)) {
+                selected_pkt_it = i;
+                selected_col_at = col_allowed_at;
+            } else {
+                DPRINTF(NVM, "%s bank %d - Rank %d not available\n", __func__,
+                        pkt->bank, pkt->rank);
+            }
+        }
+    }
+
+    if (selected_pkt_it == queue.end()) {
+        DPRINTF(NVM, "%s no available NVM ranks found\n", __func__);
+    }
+
+    return std::make_pair(selected_pkt_it, selected_col_at);
+}
+
+std::pair<MemPacketQueue::iterator, Tick>
 NVMInterface::chooseNextFRFCFS(MemPacketQueue& queue, Tick min_col_at) const
 {
+    // remember if we found a hit, but one that cannit issue seamlessly
+    bool found_prepped_pkt = false;
+
+    auto selected_pkt_it = queue.end();
+    Tick selected_col_at = MaxTick;
+
+    for (auto i = queue.begin(); i != queue.end() ; ++i) {
+        MemPacket* pkt = *i;
+
+        // select optimal NVM packet in Q
+        if (!pkt->isDram()) {
+            const Bank& bank = ranks[pkt->rank]->banks[pkt->bank];
+            const Tick col_allowed_at = pkt->isRead() ? bank.rdAllowedAt :
+                                                        bank.wrAllowedAt;
+
+            // check if rank is not doing a refresh and thus is available,
+            // if not, jump to the next packet
+            if (burstReady(pkt)) {
+                DPRINTF(NVM, "%s bank %d - Rank %d available\n", __func__,
+                        pkt->bank, pkt->rank);
+
+                // no additional rank-to-rank or media delays
+                if (col_allowed_at <= min_col_at) {
+                    // FCFS within entries that can issue without
+                    // additional delay, such as same rank accesses
+                    // or media delay requirements
+                    selected_pkt_it = i;
+                    selected_col_at = col_allowed_at;
+                    // no need to look through the remaining queue entries
+                    DPRINTF(NVM, "%s Seamless buffer hit\n", __func__);
+                    break;
+                } else if (!found_prepped_pkt) {
+                    // packet is to prepped region but cannnot issue
+                    // seamlessly; remember this one and continue
+                    selected_pkt_it = i;
+                    selected_col_at = col_allowed_at;
+                    DPRINTF(NVM, "%s Prepped packet found \n", __func__);
+                    found_prepped_pkt = true;
+                }
+            } else {
+                DPRINTF(NVM, "%s bank %d - Rank %d not available\n", __func__,
+                        pkt->bank, pkt->rank);
+            }
+        }
+    }
+
+    if (selected_pkt_it == queue.end()) {
+        DPRINTF(NVM, "%s no available NVM ranks found\n", __func__);
+    }
+
+    return std::make_pair(selected_pkt_it, selected_col_at);
+}
+
+std::pair<MemPacketQueue::iterator, Tick>
+NVMInterface::chooseNextFRFCFSCap(MemPacketQueue& queue, Tick min_col_at) const
+{
+    // is not really FRFCFSCap but just FRFCFS. We don't use NVM so it's ok for now. TBD
     // remember if we found a hit, but one that cannit issue seamlessly
     bool found_prepped_pkt = false;
 

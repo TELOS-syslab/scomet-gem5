@@ -143,6 +143,7 @@ BaseCPU::BaseCPU(const Params &p, bool is_checker)
       enterPwrGatingEvent([this]{ enterPwrGating(); }, name())
 {
     // if Python did not provide a valid ID, do it here
+    _partid=_cpuId+1;
     if (_partid == 16)
         CriticalType = -1;
     else if (_partid == 15)

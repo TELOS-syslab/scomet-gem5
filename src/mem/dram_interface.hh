@@ -619,6 +619,7 @@ class DRAMInterface : public MemInterface
       * Vector of dram ranks
       */
     std::vector<Rank*> ranks;
+    std::vector<Rank*> ranks2;
 
     /*
      * @return delay between write and read commands
@@ -715,6 +716,12 @@ class DRAMInterface : public MemInterface
     std::pair<MemPacketQueue::iterator, Tick>
     chooseNextFRFCFS(MemPacketQueue& queue, Tick min_col_at) const override;
 
+    std::pair<MemPacketQueue::iterator, Tick>
+    chooseNextFCFS(MemPacketQueue& queue, Tick min_col_at) const override;
+
+    std::pair<MemPacketQueue::iterator, Tick>
+    chooseNextFRFCFSCap(MemPacketQueue& queue, Tick min_col_at) const override;
+
     /**
      * Actually do the burst - figure out the latency it
      * will take to service the req based on bank state, channel state etc
@@ -772,7 +779,7 @@ class DRAMInterface : public MemInterface
      *
      * @param rank Specifies rank associated with read burst
      */
-    void respondEvent(uint8_t rank) override;
+    void respondEvent(uint8_t rank, int partid=0) override;
 
     /**
      * Check the refresh state to determine if refresh needs

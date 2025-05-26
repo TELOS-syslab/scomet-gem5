@@ -326,10 +326,10 @@ X86ISA::Interrupts::setThreadContext(ThreadContext *_tc)
 void
 X86ISA::Interrupts::init()
 {
-    panic_if(!intRequestPort.isConnected(),
+    /*panic_if(!intRequestPort.isConnected(),
             "Int port not connected to anything!");
     panic_if(!pioPort.isConnected(),
-            "Pio port of %s not connected to anything!", name());
+            "Pio port of %s not connected to anything!", name());*/
 
     intResponsePort.sendRangeChange();
     pioPort.sendRangeChange();

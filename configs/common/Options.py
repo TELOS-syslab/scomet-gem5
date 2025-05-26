@@ -164,6 +164,7 @@ def addNoISAOptions(parser):
     parser.add_argument("--criticaltype1", type=int, default=16)
     parser.add_argument("--criticaltype2", type=int, default=16)
     parser.add_argument("--criticaltype3", type=int, default=16)
+    parser.add_argument("--dualRowBuffer", action="store_true")
 
     # Enable Ruby
     parser.add_argument("--ruby", action="store_true")

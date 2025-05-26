@@ -382,7 +382,8 @@ Cache::handleTimingReqMiss(PacketPtr pkt, CacheBlk *blk, Tick forward_time,
             RequestPtr req = std::make_shared<Request>(pkt->req->getPaddr(),
                                                     pkt->req->getSize(),
                                                     pkt->req->getFlags(),
-                                                    pkt->req->requestorId());
+                                                    pkt->req->requestorId(),
+                                                pkt->req->getPARTID());
             pf = new Packet(req, pkt->cmd);
             pf->allocate();
             assert(pf->matchAddr(pkt));
@@ -411,7 +412,7 @@ Cache::recvTimingReq(PacketPtr pkt)
     promoteWholeLineWrites(pkt);
 
     //printf("Cache QoS %lu %d\n", pkt->id, pkt->qosValue());
-
+    
     if (pkt->qosValue() > 0) {
         DPRINTF(CriticalReport, "%s\n", pkt->print());
     }
@@ -974,7 +975,7 @@ Cache::cleanEvictBlk(CacheBlk *blk)
 
     // Creating a zero sized write, a message to the snoop filter
     RequestPtr req = std::make_shared<Request>(
-        regenerateBlkAddr(blk), blkSize, 0, Request::wbRequestorId);
+        regenerateBlkAddr(blk), blkSize, 0, Request::wbRequestorId,-1);
 
     if (blk->isSecure())
         req->setFlags(Request::SECURE);

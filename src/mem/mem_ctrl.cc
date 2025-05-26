@@ -499,7 +499,7 @@ MemCtrl::processRespondEvent(MemInterface* mem_intr,
 
     // media specific checks and functions when read response is complete
     // DRAM only
-    mem_intr->respondEvent(mem_pkt->rank);
+    mem_intr->respondEvent(mem_pkt->rank,mem_pkt->partid);
 
     if (mem_pkt->burstHelper) {
         // it is a split packet
@@ -554,13 +554,13 @@ MemCtrl::processRespondEvent(MemInterface* mem_intr,
     }
 }
 
-MemPacketQueue::iterator
-MemCtrl::chooseNext(MemPacketQueue& queue, Tick extra_col_delay,
-                                                MemInterface* mem_intr)
-{
+MemPacketQueue::iterator MemCtrl::chooseNext(MemPacketQueue &queue,
+                                             Tick extra_col_delay,
+                                             MemInterface *mem_intr) {
     // This method does the arbitration between requests.
 
     MemPacketQueue::iterator ret = queue.end();
+  Tick col_allowed_at;
 
     if (!queue.empty()) {
         if (queue.size() == 1) {
@@ -577,17 +577,11 @@ MemCtrl::chooseNext(MemPacketQueue& queue, Tick extra_col_delay,
             }
         } else if (memSchedPolicy == enums::fcfs) {
             // check if there is a packet going to a free rank
-            for (auto i = queue.begin(); i != queue.end(); ++i) {
-                MemPacket* mem_pkt = *i;
-                if (packetReady(mem_pkt, mem_intr)) {
-                    ret = i;
-                    break;
-                }
-            }
+            std::tie(ret, col_allowed_at) = mem_intr->chooseNextFCFS(queue, MaxTick);
         } else if (memSchedPolicy == enums::frfcfs) {
-            Tick col_allowed_at;
-            std::tie(ret, col_allowed_at)
-                    = chooseNextFRFCFS(queue, extra_col_delay, mem_intr);
+            std::tie(ret, col_allowed_at) = chooseNextFRFCFS(queue, extra_col_delay, mem_intr);
+        } else if (memSchedPolicy == enums::frfcfscap) {
+            std::tie(ret, col_allowed_at) = chooseNextFRFCFSCap(queue, extra_col_delay, mem_intr);
         } else {
             panic("No scheduling policy chosen\n");
         }
@@ -597,15 +591,13 @@ MemCtrl::chooseNext(MemPacketQueue& queue, Tick extra_col_delay,
 
 std::pair<MemPacketQueue::iterator, Tick>
 MemCtrl::chooseNextFRFCFS(MemPacketQueue& queue, Tick extra_col_delay,
-                                MemInterface* mem_intr)
-{
+                          MemInterface *mem_intr) {
     auto selected_pkt_it = queue.end();
     Tick col_allowed_at = MaxTick;
 
     // time we need to issue a column command to be seamless
-    const Tick min_col_at = std::max(mem_intr->nextBurstAt + extra_col_delay,
-                                    curTick());
-
+  const Tick min_col_at =
+      std::max(mem_intr->nextBurstAt + extra_col_delay, curTick());
     std::tie(selected_pkt_it, col_allowed_at) =
                  mem_intr->chooseNextFRFCFS(queue, min_col_at);
 
@@ -616,10 +608,27 @@ MemCtrl::chooseNextFRFCFS(MemPacketQueue& queue, Tick extra_col_delay,
     return std::make_pair(selected_pkt_it, col_allowed_at);
 }
 
-void
-MemCtrl::accessAndRespond(PacketPtr pkt, Tick static_latency,
-                                                MemInterface* mem_intr)
-{
+std::pair<MemPacketQueue::iterator, Tick>
+MemCtrl::chooseNextFRFCFSCap(MemPacketQueue& queue, Tick extra_col_delay,
+                          MemInterface *mem_intr) {
+    auto selected_pkt_it = queue.end();
+    Tick col_allowed_at = MaxTick;
+
+    // time we need to issue a column command to be seamless
+    const Tick min_col_at =
+      std::max(mem_intr->nextBurstAt + extra_col_delay, curTick());
+    std::tie(selected_pkt_it, col_allowed_at) =
+                 mem_intr->chooseNextFRFCFSCap(queue, min_col_at);
+
+    if (selected_pkt_it == queue.end()) {
+        DPRINTF(MemCtrl, "%s no available packets found\n", __func__);
+    }
+
+    return std::make_pair(selected_pkt_it, col_allowed_at);
+}
+
+void MemCtrl::accessAndRespond(PacketPtr pkt, Tick static_latency,
+                               MemInterface *mem_intr) {
     DPRINTF(MemCtrl, "Responding to Address %#x.. \n", pkt->getAddr());
 
     bool needsResponse = pkt->needsResponse();
@@ -1040,6 +1049,9 @@ MemCtrl::processNextReqEvent(MemInterface* mem_intr,
                 assert(!resp_event.scheduled());
                 schedule(resp_event, mem_pkt->readyTime);
             } else {
+                if(resp_queue.back()->readyTime > mem_pkt->readyTime){
+                    mem_pkt->readyTime = resp_queue.back()->readyTime + 1;
+                }
                 assert(resp_queue.back()->readyTime <= mem_pkt->readyTime);
                 assert(resp_event.scheduled());
             }

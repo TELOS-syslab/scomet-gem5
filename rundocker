@@ -1,0 +1,40 @@
+docker run -i -t -d --mount type=bind,source=/home/llj,target=/home/llj ubuntu:18.04 /bin/bash
+docker start -i -t --mount type=bind,source=/home/llj,target=/home/llj 6858bca1a928
+docker run -i -t -d --user root  --privileged -v /home/llj:/home/llj:rw forgem5 /bin/bash
+c61d571fafa
+
+compile gem5
+python3 `which scons` build/X86/gem5.opt -j70
+
+TBENCH_QPS=2000 TBENCH_MAXREQS=10000 TBENCH_WARMUPREQS=1000 TBENCH_MINSLEEPNS=10000 /home/llj/Tailbench/tailbench/masstree/mttest_integrated -j1 mycsba masstree
+
+TBENCH_QPS=2000 TBENCH_MAXREQS=10000 TBENCH_WARMUPREQS=1000 TBENCH_MINSLEEPNS=10000 /home/llj/Tailbench/tailbench/masstree/mttest_gem5se -j1 mycsba masstree -s1
+
+build/X86/gem5.opt configs/example/se.py --cmd='/home/llj/Tailbench/tailbench/masstree/mttest_integrated -j1 mycsba masstree' --cpu-type=X86O3CPU --l1d_size=64kB --l1i_size=16kB --caches
+
+/home/llj/dockerspec/benchspec/CPU/519.lbm_r/run/run_base_refrate_mytest-m64.0000/lbm_r_base.mytest-m64 3000 /home/llj/dockerspec/benchspec/CPU/519.lbm_r/run/run_base_refrate_mytest-m64.0000/eference.dat 0 0 /home/llj/dockerspec/benchspec/CPU/519.lbm_r/run/run_base_refrate_mytest-m64.0000/100_100_130_ldc.of
+
+build/X86/gem5.opt configs/example/se.py --cmd='/home/llj/dockerspec/benchspec/CPU/519.lbm_r/run/run_base_refrate_mytest-m64.0000/lbm_r_base.mytest-m64' --options="3000 /home/llj/dockerspec/benchspec/CPU/519.lbm_r/run/run_base_refrate_mytest-m64.0000/eference.dat 0 0 /home/llj/dockerspec/benchspec/CPU/519.lbm_r/run/run_base_refrate_mytest-m64.0000/100_100_130_ldc.of" --cpu-type=X86O3CPU --l1d_size=64kB --l1i_size=16kB --l2_size=512kB --caches
+
+build/X86/gem5.opt configs/example/se.py --env='/home/llj/Pivot/mastreeenv.txt' --cmd='/home/llj/Tailbench/tailbench/masstree/mttest_integrated' --options="-j1 mycsba masstree" --cpu-type=X86O3CPU --l1d_size=64kB --l1i_size=16kB --l2_size=512kB --caches
+
+       
+cd /home/llj/Pivot/
+build/X86/gem5.opt configs/example/se.py --env='/home/llj/Pivot/mastreeenv.txt' --cmd='/home/llj/Tailbench/tailbench/masstree/mttest_gem5se' --options="-j1 mycsba masstree -s1" --cpu-type=X86O3CPU --l1d_size=64kB --l1i_size=16kB --l2_size=512kB --caches > mastree.out
+
+cd /home/llj/Tailbench/tailbench/masstree
+
+X86TimingSimpleCPU AtomicSimpleCPU
+
+
+
+co-run
+
+build/X86/gem5.opt configs/example/se.py -n=2 --env='/home/llj/Pivot/mastreeenv.txt' --cmd='/home/llj/Tailbench/tailbench/masstree/mttest_gem5se;/home/llj/dockerspec/benchspec/CPU/519.lbm_r/run/run_base_refrate_mytest-m64.0000/lbm_r_base.mytest-m64' --options="-j1 mycsba masstree -s1;3000 /home/llj/dockerspec/benchspec/CPU/519.lbm_r/run/run_base_refrate_mytest-m64.0000/eference.dat 0 0 /home/llj/dockerspec/benchspec/CPU/519.lbm_r/run/run_base_refrate_mytest-m64.0000/100_100_130_ldc.of" --cpu-type=X86O3CPU --caches --l2cache --l3cache --l1d_size=64kB --l1d_assoc=4 --l1i_size=64kB --l1i_assoc=4 --l2_size=512kB  --l2_assoc=8  --l3_size=4MB --mem-type=DDR5_6400_4x8  --mem-size=16GB  > mastreelbm.out
+
+build/X86/gem5.opt configs/example/se.py -n=2 --env=/home/llj/Pivot/mastreeenv.txt '--cmd=/home/llj/Tailbench/tailbench/masstree/mttest_gem5se;/home/llj/dockerspec/benchspec/CPU/519.lbm_r/run/run_base_refrate_mytest-m64.0000/lbm_r_base.mytest-m64' '--options=-j1 mycsba masstree -s1;3000 /home/llj/dockerspec/benchspec/CPU/519.lbm_r/run/run_base_refrate_mytest-m64.0000/eference.dat 0 0 /home/llj/dockerspec/benchspec/CPU/519.lbm_r/run/run_base_refrate_mytest-m64.0000/100_100_130_ldc.of' --cpu-type=X86O3CPU --caches --l2cache --l3cache --l1d_size=64kB --l1d_assoc=4 --l1i_size=64kB --l1i_assoc=4 --l2_size=512kB --l2_assoc=8 --l3_size=4MB --mem-type=DDR5_6400_4x8 --mem-size=16GB --dualRowBuffer=True > dualRowBuffer.out
+
+solo-run
+
+build/X86/gem5.opt configs/example/se.py -n=1 --env='/home/llj/Pivot/mastreeenv.txt' --cmd='/home/llj/Tailbench/tailbench/masstree/mttest_gem5se' --options="-j1 mycsba masstree -s1" --cpu-type=X86O3CPU --caches --l2cache --l3cache --l1d_size=64kB --l1d_assoc=4 --l1i_size=64kB --l1i_assoc=4 --l2_size=512kB  --l2_assoc=8  --l3_size=4MB --mem-type=DDR5_6400_4x8  --mem-size=16GB > mastree.out
+

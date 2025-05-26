@@ -129,21 +129,30 @@ def config_cache(options, system):
         # same clock as the CPUs.
         if options.l3cache:
             if num_critical_cpu == 1:
-                system.tollcbus = L3XBar(clk_domain = system.cpu_clk_domain)
-                system.llc0 = l3_cache_class(
-                                    **_get_cache_opts('l3c', options))
+                system.tollcbus = L3XBar(clk_domain=system.cpu_clk_domain)
+                system.llc0 = l3_cache_class(**_get_cache_opts("l3c", options))
                 system.llc0.cpu_side = system.tollcbus.mem_side_ports
                 system.llc0.mem_side = system.membus.cpu_side_ports
-                system.llc1 = l3_cache_class(
-                                    **_get_cache_opts('l3b', options))
+                system.llc0.tag_latency = int(system.llc0.tag_latency)
+                system.llc1 = l3_cache_class(**_get_cache_opts("l3b", options))
                 system.llc1.cpu_side = system.tollcbus.mem_side_ports
                 system.llc1.mem_side = system.membus.cpu_side_ports
-                Test_mode = getattr(options, 'test_mode')
-                if (Test_mode == 'MBA'):
-                    MBACtrl = getattr(options, 'MBACtrl')
-                #    system.MBA = m5.objects.MBA()
+                system.llc1.tag_latency = int(system.llc1.tag_latency)
+                Test_mode = getattr(options, "test_mode")
+                if Test_mode == "MBA":
+                    MBACtrl = getattr(options, "MBACtrl")
+                    print("set MBA to ", MBACtrl)
+                    #    system.MBA = m5.objects.MBA()
                     MBACycles = MBAdict[MBACtrl]
                     system.llc1.tag_latency += MBACycles
+                    print(
+                        "0:latency %d assoc %d size %d"
+                        % (system.llc0.tag_latency, system.llc0.assoc, system.llc0.size)
+                    )
+                    print(
+                        "1:latency %d assoc %d size %d"
+                        % (system.llc1.tag_latency, system.llc1.assoc, system.llc1.size)
+                    )
                 #    system.MBA.mem_side = system.membus.cpu_side_ports
                 #else:
                 '''

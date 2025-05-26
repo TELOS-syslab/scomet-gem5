@@ -65,6 +65,7 @@ MemInterface::MemInterface(const MemInterfaceParams &_p)
                       range.granularity() / burstSize : 1),
       ranksPerChannel(_p.ranks_per_channel),
       banksPerRank(_p.banks_per_rank), rowsPerBank(0),
+      dualRowBuffer(_p.dual_row_buffer),
       tCK(_p.tCK), tCS(_p.tCS), tBURST(_p.tBURST),
       tRTW(_p.tRTW),
       tWTR(_p.tWTR),

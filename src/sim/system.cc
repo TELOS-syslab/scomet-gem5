@@ -518,7 +518,7 @@ System::_getRequestorId(const SimObject* requestor,
 
     // Append the new Requestor metadata to the group of system Requestors.
     requestors.emplace_back(requestor, name, requestor_id);
-
+    printf("requestor %s, id %d\n", name.c_str(), requestor_id);
     return requestors.back().id;
 }
 

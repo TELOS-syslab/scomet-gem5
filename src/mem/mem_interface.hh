@@ -92,6 +92,7 @@ class MemInterface : public AbstractMemory
         uint32_t openRow;
         uint8_t bank;
         uint8_t bankgr;
+        int cap = 0;
 
         Tick rdAllowedAt;
         Tick wrAllowedAt;
@@ -140,6 +141,7 @@ class MemInterface : public AbstractMemory
     const uint32_t ranksPerChannel;
     const uint32_t banksPerRank;
     uint32_t rowsPerBank;
+    bool dualRowBuffer;
 
     /**
      * General timing requirements
@@ -245,6 +247,12 @@ class MemInterface : public AbstractMemory
     virtual std::pair<MemPacketQueue::iterator, Tick>
     chooseNextFRFCFS(MemPacketQueue& queue, Tick min_col_at) const = 0;
 
+    virtual std::pair<MemPacketQueue::iterator, Tick>
+    chooseNextFCFS(MemPacketQueue &queue, Tick min_col_at) const = 0;
+
+    virtual std::pair<MemPacketQueue::iterator, Tick>
+    chooseNextFRFCFSCap(MemPacketQueue &queue, Tick min_col_at) const = 0;
+
     /*
      * Function to calulate unloaded latency
      */
@@ -331,7 +339,7 @@ class MemInterface : public AbstractMemory
     /**
      * This function is DRAM specific.
      */
-    virtual void respondEvent(uint8_t rank)
+    virtual void respondEvent(uint8_t rank,int partid=0)
     {
         panic("MemInterface respondEvent should not be executed from here.\n");
     };

@@ -78,6 +78,7 @@ class MemInterface(AbstractMemory):
     devices_per_rank = Param.Unsigned("Number of devices/chips per rank")
     ranks_per_channel = Param.Unsigned("Number of ranks per channel")
     banks_per_rank = Param.Unsigned("Number of banks per rank")
+    dual_row_buffer = Param.Bool(False, "Dual row buffer mode")
 
     # timing behaviour and constraints - all in nanoseconds
 

@@ -1,0 +1,24 @@
+bank.openRow -- rowbuffer
+//we use openrow2 to present BE tasks' rowbuffer
+we use rank2 to present BE tasks' rowbuffer
+
+we need to modify the following functions
+
+std::pair<MemPacketQueue::iterator, Tick>
+DRAMInterface::chooseNextFRFCFS(MemPacketQueue& queue, Tick min_col_at) const
+
+DRAMInterface::activateBank(Rank& rank_ref, Bank& bank_ref,
+                       Tick act_tick, uint32_t row)
+
+DRAMInterface::prechargeBank(Rank& rank_ref, Bank& bank, Tick pre_tick,
+                             bool auto_or_preall, bool trace)
+
+DRAMInterface::doBurstAccess(MemPacket* mem_pkt, Tick next_burst_at,
+                             const std::vector<MemPacketQueue>& queue)
+
+DRAMInterface::minBankPrep(const MemPacketQueue& queue,
+                      Tick min_col_at) const
+
+++outstandingEvents processRefreshEvent prechargeBank doBurstAccess (?)
+--outstandingEvents processPrechargeEvent processWriteDoneEvent processPowerEvent respondEvent
+error in processPrechargeEvent

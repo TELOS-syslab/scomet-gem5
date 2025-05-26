@@ -251,6 +251,12 @@ class NVMInterface : public MemInterface
     std::pair<MemPacketQueue::iterator, Tick>
     chooseNextFRFCFS(MemPacketQueue& queue, Tick min_col_at) const override;
 
+    std::pair<MemPacketQueue::iterator, Tick>
+    chooseNextFCFS(MemPacketQueue& queue, Tick min_col_at) const override;
+
+    std::pair<MemPacketQueue::iterator, Tick>
+    chooseNextFRFCFSCap(MemPacketQueue& queue, Tick min_col_at) const override;
+
     /**
      *  Add rank to rank delay to bus timing to all NVM banks in alli ranks
      *  when access to an alternate interface is issued
@@ -263,7 +269,7 @@ class NVMInterface : public MemInterface
     /**
      * Following two functions are not required for nvm interface
      */
-    void respondEvent(uint8_t rank) override { };
+    void respondEvent(uint8_t rank, int partid=0) override { };
 
     void checkRefreshState(uint8_t rank) override { };
 

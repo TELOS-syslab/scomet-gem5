@@ -156,6 +156,8 @@ class MemPacket
      */
     uint8_t _qosValue;
 
+    uint64_t partid;
+
     /**
      * Set the packet QoS value
      * (interface compatibility with Packet)
@@ -210,7 +212,7 @@ class MemPacket
           _requestorId(pkt->requestorId()),
           read(is_read), dram(is_dram), pseudoChannel(_channel), rank(_rank),
           bank(_bank), row(_row), bankId(bank_id), addr(_addr), size(_size),
-          burstHelper(NULL), _qosValue(_pkt->qosValue())
+          burstHelper(NULL), _qosValue(_pkt->qosValue()),partid(_pkt->req->getPARTID())
     { }
 
 };
@@ -427,6 +429,10 @@ class MemCtrl : public qos::MemCtrl
      */
     virtual std::pair<MemPacketQueue::iterator, Tick>
     chooseNextFRFCFS(MemPacketQueue& queue, Tick extra_col_delay,
+                    MemInterface* mem_intr);
+
+    virtual std::pair<MemPacketQueue::iterator, Tick>
+    chooseNextFRFCFSCap(MemPacketQueue& queue, Tick extra_col_delay,
                     MemInterface* mem_intr);
 
     /**
