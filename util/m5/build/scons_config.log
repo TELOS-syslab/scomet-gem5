@@ -1,11 +1,49 @@
-file /home/llj/gem5/util/m5/SConstruct,line 118:
+file /home/wjy/Pivot/util/m5/SConstruct,line 121:
 	Configure(confdir = build/.scons_config)
 scons: Configure: Checking for java package org.junit...
-build/.scons_config/conftest_0.java <-
-  |import org.junit.*;
-javac build/.scons_config/conftest_0.java
-sh: line 1: javac: command not found
-scons: Configure: no
+scons: Configure: Caught exception while building "build/.scons_config/conftest_0.java":
+
+Traceback (most recent call last):
+  File "/usr/lib/scons/SCons/SConsign.py", line 86, in Get_DataBase
+    return DataBase[top], "c"
+KeyError: <SCons.Node.FS.Dir object at 0x38ac2ad8>
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/scons/SCons/Job.py", line 212, in start
+    task.prepare()
+  File "/usr/lib/scons/SCons/Taskmaster.py", line 179, in prepare
+    self.exception_raise()
+  File "/usr/lib/scons/SCons/Taskmaster.py", line 554, in _exception_raise
+    exec("raise exc_value.with_traceback(exc_traceback)")
+  File "<string>", line 1, in <module>
+  File "/usr/lib/scons/SCons/Taskmaster.py", line 973, in next_task
+    task.make_ready()
+  File "/usr/lib/scons/SCons/Taskmaster.py", line 411, in make_ready_current
+    (not t.always_build and t.is_up_to_date())
+  File "/usr/lib/scons/SCons/Node/FS.py", line 3283, in is_up_to_date
+    r = self.changed()
+  File "/usr/lib/scons/SCons/Node/FS.py", line 3223, in changed
+    has_changed = SCons.Node.Node.changed(self, node)
+  File "/usr/lib/scons/SCons/Node/__init__.py", line 1439, in changed
+    bi = node.get_stored_info().binfo
+  File "/usr/lib/scons/SCons/Node/FS.py", line 2832, in get_stored_info
+    sconsign_entry = self.dir.sconsign().get_entry(self.name)
+  File "/usr/lib/scons/SCons/Node/FS.py", line 1868, in sconsign
+    return _sconsign_map[self._func_sconsign](self)
+  File "/usr/lib/scons/SCons/Node/FS.py", line 71, in sconsign_dir
+    node._sconsign = SCons.SConsign.ForDirectory(node)
+  File "/usr/lib/scons/SCons/SConsign.py", line 234, in __init__
+    db, mode = Get_DataBase(dir)
+  File "/usr/lib/scons/SCons/SConsign.py", line 88, in Get_DataBase
+    db = DataBase[top] = DB_Module.open(DB_Name, "c")
+  File "/usr/lib/scons/SCons/dblite.py", line 206, in open
+    return dblite(file, flag, mode)
+  File "/usr/lib/scons/SCons/dblite.py", line 123, in __init__
+    self._dict = pickle.loads(p, encoding='bytes')
+ValueError: unsupported pickle protocol: 5
+scons: Configure: (cached) no
 
 scons: Configure: Checking whether pkg-config program exists...
 scons: Configure: /usr/bin/pkg-config

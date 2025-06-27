@@ -152,7 +152,7 @@ class DDR5_4400_4x8(DRAMInterface):
     # According to the datasheet tXS = tRFC = 295ns (normal Refresh mode)
     tXS = "295ns"
 
-    page_policy = "close_adaptive"
+    page_policy = "open_adaptive"
 
     # Power related parameters
     # Reference: https://media-www.micron.com/-/media/client/global/

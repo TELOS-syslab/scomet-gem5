@@ -53,6 +53,7 @@ class DRAMInterface(MemInterface):
 
     # scheduler page policy
     page_policy = Param.PageManage('open_adaptive', "Page management policy")
+    # print(page_policy)
 
     # enforce a limit on the number of accesses per row
     max_accesses_per_row = Param.Unsigned(16, "Max accesses per row before "
@@ -432,6 +433,7 @@ class HMC_2500_1x32(DDR3_1600_8x8):
     # [2] nevertheless 'close' policy opens and closes the row multiple times
     # for bursts largers than 32Bytes. For this reason we use 'close_adaptive'
     page_policy = 'close_adaptive'
+    # page_policy = "open_adaptive"
 
     # RoCoRaBaCh resembles the default address mapping in HMC
     addr_mapping = 'RoCoRaBaCh'
@@ -1227,6 +1229,7 @@ class HBM_2000_4H_1x64(DRAMInterface):
     tXS = "216ns"
 
     page_policy = 'close_adaptive'
+    # page_policy = 'open_adaptive'
 
     read_buffer_size = 64
     write_buffer_size = 64
@@ -1354,7 +1357,8 @@ class DDR5_4400_4x8(DRAMInterface):
     # According to the datasheet tXS = tRFC = 295ns (normal Refresh mode)
     tXS = "295ns"
 
-    page_policy = "close_adaptive"
+    # page_policy = "close_adaptive"
+    page_policy = "open_adaptive"
 
     # Power related parameters
     # Reference: https://media-www.micron.com/-/media/client/global/
@@ -1381,6 +1385,7 @@ class DDR5_4400_4x8(DRAMInterface):
 
 # Maximum bandwidth of DDR5_6400_4x8 (6400 MT/s) can be 25.6GB/s
 class DDR5_6400_4x8(DDR5_4400_4x8):
+    # print("memory: DDR5_6400_4x8")
     # For 6400 MT/s
     tCK = "0.312ns"
 
@@ -1506,6 +1511,7 @@ class LPDDR5_5500_1x16_BG_BL32(DRAMInterface):
 
     # Set page policy to better suit DMC Huxley
     page_policy = 'close_adaptive'
+    # page_policy = "open_adaptive"
 
     # 16-bit channel interface
     device_bus_width = 16

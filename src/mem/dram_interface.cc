@@ -87,13 +87,16 @@ DRAMInterface::chooseNextFRFCFS(MemPacketQueue &queue, Tick min_col_at) const {
     // remember if we found a row hit, not seamless, but bank prepped
     // and ready
     bool found_prepped_pkt = false;
-  bool found_hitted_pkt = false;
+    bool found_hitted_pkt = false;
 
     // if we have no row hit, prepped or not, and no seamless packet,
     // just go for the earliest possible
     bool found_earliest_pkt = false;
 
     Tick selected_col_at = MaxTick;
+    std::stable_sort(queue.begin(), queue.end(), [](MemPacket* a, MemPacket* b) {
+        return a->partid < b->partid;
+    });
     auto selected_pkt_it = queue.end();
     for (auto i = queue.begin(); i != queue.end() ; ++i) {
         MemPacket* pkt = *i;
@@ -163,7 +166,7 @@ DRAMInterface::chooseNextFRFCFS(MemPacketQueue &queue, Tick min_col_at) const {
                     // bank is amongst first available banks
                     // minBankPrep will give priority to packets that can
                     // issue seamlessly
-          if (bits(earliest_banks[pkt->rank], pkt->bank, pkt->bank)) {
+                if (bits(earliest_banks[pkt->rank], pkt->bank, pkt->bank)) {
                         found_earliest_pkt = true;
                         found_hidden_bank = hidden_bank_prep;
 
@@ -187,13 +190,13 @@ DRAMInterface::chooseNextFRFCFS(MemPacketQueue &queue, Tick min_col_at) const {
         DPRINTF(DRAM, "%s no available DRAM ranks found\n", __func__);
     }
     MemPacket *pkt = *selected_pkt_it;
-    if (found_hitted_pkt) {
+    /* if (found_hitted_pkt) {
         printf("row hit channel %u rank %u bank %u row %u partid %u 0x%" PRIx64 "\n",
            pkt->pseudoChannel, pkt->rank, pkt->bank, pkt->row, pkt->partid, pkt->addr);
     } else {
         printf("row miss channel %u rank %u bank %u row %u partid %u 0x%" PRIx64 "\n",
            pkt->pseudoChannel, pkt->rank, pkt->bank, pkt->row, pkt->partid, pkt->addr);
-    }
+    } */
     return std::make_pair(selected_pkt_it, selected_col_at);
 }
 
@@ -215,7 +218,7 @@ DRAMInterface::chooseNextFCFS(MemPacketQueue &queue, Tick min_col_at) const {
 
 std::pair<MemPacketQueue::iterator, Tick>
 DRAMInterface::chooseNextFRFCFSCap(MemPacketQueue &queue, Tick min_col_at) const {
-std::vector<uint32_t> earliest_banks(ranksPerChannel, 0);
+    std::vector<uint32_t> earliest_banks(ranksPerChannel, 0);
 
     // Has minBankPrep been called to populate earliest_banks?
     bool filled_earliest_banks = false;
@@ -270,6 +273,7 @@ std::vector<uint32_t> earliest_banks(ranksPerChannel, 0);
                     checkrank2 = (bank2.openRow == pkt->row);
                 }
                 // check if it is a row hit
+                // printf("bank.openrow %d, row %d\n", bank.openRow, pkt->row);
                 if (bank.openRow == pkt->row || (checkrank2) || bank.cap >= 4) {
                     found_hitted_pkt = true;
                     if (bank.cap >= 4)
@@ -335,7 +339,7 @@ std::vector<uint32_t> earliest_banks(ranksPerChannel, 0);
         DPRINTF(DRAM, "%s no available DRAM ranks found\n", __func__);
     }
     MemPacket *pkt = *selected_pkt_it;
-    if (found_hitted_pkt) {
+    /* if (found_hitted_pkt) {
         Bank& hitted_bank = enableRank2(dualRowBuffer,pkt->partid) ?
             ranks2[pkt->rank]->banks[pkt->bank] : ranks[pkt->rank]->banks[pkt->bank];
 
@@ -357,7 +361,7 @@ std::vector<uint32_t> earliest_banks(ranksPerChannel, 0);
         missed_bank.cap = 0;
         printf("row miss channel %u rank %u bank %u row %u partid %u 0x%" PRIx64 " cap %d\n",
             pkt->pseudoChannel, pkt->rank, pkt->bank, pkt->row, pkt->partid, pkt->addr, missed_bank.cap);
-    }
+    } */
     return std::make_pair(selected_pkt_it, selected_col_at);
 }
 
@@ -538,6 +542,7 @@ DRAMInterface::doBurstAccess(MemPacket* mem_pkt, Tick next_burst_at,
 {
     DPRINTF(DRAM, "Timing access to addr %#x, rank/bank/row %d %d %d\n",
             mem_pkt->addr, mem_pkt->rank, mem_pkt->bank, mem_pkt->row);
+    const Tick start_tick = curTick();
     std::vector<Rank*> *baseranks = &ranks;
     std::vector<Rank*> *dualranks = NULL;
     //Rank* base = ranks[mem_pkt->rank];
@@ -578,6 +583,7 @@ DRAMInterface::doBurstAccess(MemPacket* mem_pkt, Tick next_burst_at,
 
         // If there is a page open, precharge it.
         if (bank_ref.openRow != Bank::NO_ROW) {
+            // printf("Precharge bank %d due to row miss\n", bank_ref.bank);
             prechargeBank(rank_ref, bank_ref, std::max(bank_ref.preAllowedAt,
                                                    curTick()));
         }
@@ -596,7 +602,10 @@ DRAMInterface::doBurstAccess(MemPacket* mem_pkt, Tick next_burst_at,
 
     // we need to wait until the bus is available before we can issue
     // the command; need to ensure minimum bus delay requirement is met
+    // printf("col_allowed_at %d next_burst_at %d curTick %d\n", col_allowed_at - start_tick, next_burst_at - start_tick, curTick() - start_tick);
+    
     Tick cmd_at = std::max({col_allowed_at, next_burst_at, curTick()});
+    // printf("init cmd_at %d\n", cmd_at - start_tick);
 
     // verify that we have command bandwidth to issue the burst
     // if not, shift to next burst window
@@ -605,6 +614,8 @@ DRAMInterface::doBurstAccess(MemPacket* mem_pkt, Tick next_burst_at,
         cmd_at = ctrl->verifyMultiCmd(cmd_at, maxCommandsPerWindow, tCK);
     else
         cmd_at = ctrl->verifySingleCmd(cmd_at, maxCommandsPerWindow, false);
+
+    // printf("verify bandwidth cmd_at %d\n", cmd_at - start_tick);
 
     // if we are interleaving bursts, ensure that
     // 1) we don't double interleave on next burst issue
@@ -624,6 +635,8 @@ DRAMInterface::doBurstAccess(MemPacket* mem_pkt, Tick next_burst_at,
     }
     DPRINTF(DRAM, "Schedule RD/WR burst at tick %d\n", cmd_at);
 
+    // printf("interleave burst cmd_at %d\n", cmd_at - start_tick);
+
     // update the packet ready time
     if (mem_pkt->isRead()) {
         mem_pkt->readyTime = cmd_at + tRL + tBURST;
@@ -631,9 +644,11 @@ DRAMInterface::doBurstAccess(MemPacket* mem_pkt, Tick next_burst_at,
         mem_pkt->readyTime = cmd_at + tWL + tBURST;
     }
 
-    if(enableR2){
-        mem_pkt->readyTime = curTick() + tBURST;
-    }
+    printf("ready time %d\n", mem_pkt->readyTime - start_tick);
+
+    // if(enableR2){
+    //     mem_pkt->readyTime = curTick() + tBURST;
+    // }
 
     rank_ref.lastBurstTick = cmd_at;
 
@@ -695,12 +710,15 @@ DRAMInterface::doBurstAccess(MemPacket* mem_pkt, Tick next_burst_at,
     // if we reached the max, then issue with an auto-precharge
     bool auto_precharge = pageMgmt == enums::close ||
         bank_ref.rowAccesses == maxAccessesPerRow;
+    // printf("page mgmt is close? %d, rowAccess %d, max %d\n", int(pageMgmt == enums::close), bank_ref.rowAccesses, maxAccessesPerRow);
 
     // if we did not hit the limit, we might still want to
     // auto-precharge
     if (!auto_precharge &&
         (pageMgmt == enums::open_adaptive ||
          pageMgmt == enums::close_adaptive)) {
+        // printf("page mgmt is close adaptive? %d\n", int(pageMgmt == enums::close_adaptive));
+        // printf("page mgmt is open adaptive? %d\n", int(pageMgmt == enums::open_adaptive));
         // a twist on the open and close page policies:
         // 1) open_adaptive page policy does not blindly keep the
         // page open, but close it if there are no row hits, and there
@@ -773,6 +791,7 @@ DRAMInterface::doBurstAccess(MemPacket* mem_pkt, Tick next_burst_at,
     if (auto_precharge) {
         // if auto-precharge push a PRE command at the correct tick to the
         // list used by DRAMPower library to calculate power
+        // printf("Precharge bank %d due to auto precharge\n", bank_ref.bank);
         prechargeBank(rank_ref, bank_ref, std::max(curTick(),
                       bank_ref.preAllowedAt), true);
 
@@ -819,6 +838,14 @@ DRAMInterface::doBurstAccess(MemPacket* mem_pkt, Tick next_burst_at,
         stats.perBankWrBursts[mem_pkt->bankId]++;
 
     }
+    printf("Packet from partID %d on channel %x\nnow read hit %" PRIu64 " read num %" PRIu64 " write hit %" PRIu64 " write num %" PRIu64 "\n",
+            mem_pkt->partid,
+            (uint64_t)(this),
+            static_cast<uint64_t>(stats.readRowHits.value()),
+            static_cast<uint64_t>(stats.readBursts.value()),
+            static_cast<uint64_t>(stats.writeRowHits.value()),
+            static_cast<uint64_t>(stats.writeBursts.value())
+        );
     // Update bus state to reflect when previous command was issued
     return std::make_pair(cmd_at, cmd_at + burst_gap);
 }
@@ -881,11 +908,11 @@ DRAMInterface::DRAMInterface(const DRAMInterfaceParams &_p)
         DPRINTF(DRAM, "Creating DRAM rank %d \n", i);
         Rank* rank = new Rank(_p, i, *this);
         ranks.push_back(rank);
-    // if(dualRowBuffer){
-            printf("Creating DRAM rank2 %d \n", i);
-            Rank* rank2 = new Rank(_p, i+ranksPerChannel, *this);
-            ranks2.push_back(rank2);
-    //    }
+    //  if(dualRowBuffer){
+        printf("Creating DRAM rank2 %d \n", i);
+        Rank* rank2 = new Rank(_p, i+ranksPerChannel, *this);
+        ranks2.push_back(rank2);
+    //  }
         
     }
 
@@ -1576,6 +1603,7 @@ DRAMInterface::Rank::processRefreshEvent()
 
             for (auto &b : banks) {
                 if (b.openRow != Bank::NO_ROW) {
+                    // printf("Precharge bank %d due to refresh\n", b.bank);
                     dram.prechargeBank(*this, b, pre_at, true, false);
                 } else {
                     b.actAllowedAt = std::max(b.actAllowedAt, act_allowed_at);

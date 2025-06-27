@@ -496,6 +496,7 @@ MemCtrl::processRespondEvent(MemInterface* mem_intr,
             "processRespondEvent(): Some req has reached its readyTime\n");
 
     MemPacket* mem_pkt = queue.front();
+    
 
     // media specific checks and functions when read response is complete
     // DRAM only
@@ -521,8 +522,14 @@ MemCtrl::processRespondEvent(MemInterface* mem_intr,
                          mem_intr);
     }
 
-    queue.pop_front();
+    /* printf("resp queue: \n");
+    for (auto i = queue.begin(); i != queue.end() ; ++i) {
+        MemPacket* pkt = *i;
+        printf("channel %u rank %u bank %u row %u partid %u 0x%" PRIx64 "\n",
+            pkt->pseudoChannel, pkt->rank, pkt->bank, pkt->row, pkt->partid, pkt->addr);
+    } */
 
+    queue.pop_front();
     if (!queue.empty()) {
         assert(queue.front()->readyTime >= curTick());
         assert(!resp_event.scheduled());
@@ -560,10 +567,16 @@ MemPacketQueue::iterator MemCtrl::chooseNext(MemPacketQueue &queue,
     // This method does the arbitration between requests.
 
     MemPacketQueue::iterator ret = queue.end();
-  Tick col_allowed_at;
+    Tick col_allowed_at;
 
     if (!queue.empty()) {
-        if (queue.size() == 1) {
+        /*printf("read queue: \n");
+        for (auto i = queue.begin(); i != queue.end() ; ++i) {
+            MemPacket* pkt = *i;
+            printf("channel %u rank %u bank %u row %u partid %u 0x%" PRIx64 "\n",
+                pkt->pseudoChannel, pkt->rank, pkt->bank, pkt->row, pkt->partid, pkt->addr);
+        }*/
+        /* if (queue.size() == 1) {
             // available rank corresponds to state refresh idle
             MemPacket* mem_pkt = *(queue.begin());
             if (mem_pkt->pseudoChannel != mem_intr->pseudoChannel) {
@@ -575,7 +588,8 @@ MemPacketQueue::iterator MemCtrl::chooseNext(MemPacketQueue &queue,
             } else {
                 DPRINTF(MemCtrl, "Single request, going to a busy rank\n");
             }
-        } else if (memSchedPolicy == enums::fcfs) {
+        } else */
+        if (memSchedPolicy == enums::fcfs) {
             // check if there is a packet going to a free rank
             std::tie(ret, col_allowed_at) = mem_intr->chooseNextFCFS(queue, MaxTick);
         } else if (memSchedPolicy == enums::frfcfs) {

@@ -101,6 +101,7 @@ class SnoopFilter : public SimObject
         maxEntryCount(p.max_capacity / p.system->cacheLineSize()),
         stats(this)
     {
+        // printf("max_capacity %d cacheLineSize %d\n", p.max_capacity, p.system->cacheLineSize());
     }
 
     /**

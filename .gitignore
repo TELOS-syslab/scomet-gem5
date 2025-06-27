@@ -2,6 +2,7 @@ build
 Resource.tar.gz
 Resource
 Result
+Results/*
 PivotResult/*
 parser.out
 parsetab.py
@@ -38,3 +39,4 @@ configs/dram/lowp_sweep.cfg
 tmp*.txt
 lat*.txt
 .vscode
+core
