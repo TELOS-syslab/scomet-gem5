@@ -1,2 +1,0 @@
-#!/bin/bash -x
-./home/zlr/MPAMimgdnn70.sh

@@ -1,2 +1,0 @@
-#!/bin/bash -x
-./home/zlr/Pivotxapian70.sh

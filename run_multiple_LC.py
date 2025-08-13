@@ -6,7 +6,7 @@ IMAGE = "scomet:v0.1"
 MOUNT_DIR = "/home/wjy"
 BUILD_CMD = "cd /home/wjy/Pivot && python3 /usr/bin/scons build/X86/gem5.opt -j70 && python3 /usr/bin/scons build/X86/gem5.debug -j70"
 KILL_CMD = "pkill -f gem5.*"
-GEM5_BIN = "build/X86/gem5.opt"
+GEM5_BIN = "/home/wjy/Pivot/build/X86/gem5.opt"
 LC_BIN = "/home/wjy/Tailbench/tailbench/masstree/mttest_gem5se"
 LC_OPTS = "-j1 mycsba masstree -s1"
 SPEC_DIR = "/home/wjy/dockerspec/benchspec/CPU/{}/run/run_base_refrate_mytest-m64.0000"
@@ -117,12 +117,12 @@ def run_gem5(container, n, rps, cmd_str, opts_str, cha, be_mbw, outfile):
     ]
     with open(ENV_PATH, 'w') as f:
         f.writelines(lines)
-    run_cmd(f"mkdir -p checkpoints/{container}")
+    run_cmd(f"mkdir -p /home/wjy/Pivot/checkpoints/{container}")
 
     if n == 1:
         gem5_cmd = (
-            f"cd /home/wjy/Pivot && "
-            f"{GEM5_BIN} configs/example/se.py "
+            f"cd /home/wjy/Pivot/run && "
+            f"{GEM5_BIN} /home/wjy/Pivot/configs/example/se.py "
             f"-n={n} --env='{ENV_PATH}' --cmd='{cmd_str}' --options='{opts_str}' "
             f"--cpu-type=X86O3CPU --caches --l2cache --l3cache "
             f"--l1d_size=48kB --l1d_assoc=12 --l1i_size=32kB --l1i_assoc=8 "
@@ -130,14 +130,14 @@ def run_gem5(container, n, rps, cmd_str, opts_str, cha, be_mbw, outfile):
             f"--l3b_size=120MB --l3b_assoc=15 --mem-type=DDR5_6400_4x8 "
             f"--mem-size=16GB --mem-channels={cha} "
             f"--latency_critical_num={n-1} --test_mode=MBA --MBACtrl={be_mbw}% "
-            f"--checkpoint-dir=checkpoints/{container}"
+            f"--checkpoint-dir=/home/wjy/Pivot/checkpoints/{container}"
             f"--take-checkpoints=100"
-            f"> Results/{outfile} 2>&1"
+            f"> /home/wjy/Pivot/Results/{outfile} 2>&1"
         )
     else:
         gem5_cmd = (
-            f"cd /home/wjy/Pivot && "
-            f"{GEM5_BIN} configs/example/se.py "
+            f"cd /home/wjy/Pivot/run && "
+            f"{GEM5_BIN} /home/wjy/Pivot/configs/example/se.py "
             f"-n={n} --env='{ENV_PATH}' --cmd='{cmd_str}' --options='{opts_str}' "
             f"--cpu-type=X86O3CPU --caches --l2cache --l3cache "
             f"--l1d_size=48kB --l1d_assoc=12 --l1i_size=32kB --l1i_assoc=8 "
@@ -145,9 +145,9 @@ def run_gem5(container, n, rps, cmd_str, opts_str, cha, be_mbw, outfile):
             f"--l3b_size=8MB --l3b_assoc=1 --mem-type=DDR5_6400_4x8 "
             f"--mem-size=16GB --mem-channels={cha} "
             f"--latency_critical_num={n-1} --test_mode=MBA --MBACtrl={be_mbw}% "
-            f"--checkpoint-dir=checkpoints/{container}"
-            f"--take-checkpoints=10000000"
-            f"> Results/{outfile} 2>&1"
+            f"--checkpoint-dir=/home/wjy/Pivot/checkpoints/{container}"
+            f"--take-checkpoints=100"
+            f"> /home/wjy/Pivot/Results/{outfile} 2>&1"
         )
     run_cmd(f"docker exec -itd {container} bash -c \"{gem5_cmd}\"")
 
@@ -167,7 +167,7 @@ def main():
     time.sleep(10)
 
     if "--debug" in sys.argv:
-        GEM5_BIN = "build/X86/gem5.debug --debug-flags=Decoder"
+        GEM5_BIN = "/home/wjy/Pivot/build/X86/gem5.debug --debug-flags=Decoder"
 
     count = 0
     CHANNELS = [8]

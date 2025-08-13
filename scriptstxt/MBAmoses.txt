@@ -1,2 +1,0 @@
-#!/bin/bash -x
-./home/zlr/MBAmoses70.sh
