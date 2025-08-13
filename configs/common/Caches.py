@@ -51,7 +51,8 @@ class L1Cache(Cache):
     tag_latency = 2
     data_latency = 2
     response_latency = 2
-    mshrs = 4
+    # mshrs = 4
+    mshrs = 16
     tgts_per_mshr = 20
 
 class L1_ICache(L1Cache):
@@ -67,7 +68,8 @@ class L2Cache(Cache):
     tag_latency = 12
     data_latency = 12
     response_latency = 12
-    mshrs = 20
+    # mshrs = 20
+    mshrs = 32
     tgts_per_mshr = 12
     write_buffers = 8
 
@@ -76,7 +78,8 @@ class L3Cache(Cache):
     tag_latency = 32
     data_latency = 32
     response_latency = 32
-    mshrs = 40
+    # mshrs = 40
+    mshrs = 128
     tgts_per_mshr = 8
     write_buffers = 16
 

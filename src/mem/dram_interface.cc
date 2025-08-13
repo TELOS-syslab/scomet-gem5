@@ -644,7 +644,7 @@ DRAMInterface::doBurstAccess(MemPacket* mem_pkt, Tick next_burst_at,
         mem_pkt->readyTime = cmd_at + tWL + tBURST;
     }
 
-    printf("ready time %d\n", mem_pkt->readyTime - start_tick);
+    // printf("ready time %d\n", mem_pkt->readyTime - start_tick);
 
     // if(enableR2){
     //     mem_pkt->readyTime = curTick() + tBURST;
@@ -838,7 +838,8 @@ DRAMInterface::doBurstAccess(MemPacket* mem_pkt, Tick next_burst_at,
         stats.perBankWrBursts[mem_pkt->bankId]++;
 
     }
-    printf("Packet from partID %d on channel %x\nnow read hit %" PRIu64 " read num %" PRIu64 " write hit %" PRIu64 " write num %" PRIu64 "\n",
+    printf("Packet from partID %d on channel %x\n \
+            now read hit %" PRIu64 " read num %" PRIu64 " write hit %" PRIu64 " write num %" PRIu64 "\n",
             mem_pkt->partid,
             (uint64_t)(this),
             static_cast<uint64_t>(stats.readRowHits.value()),
@@ -846,6 +847,7 @@ DRAMInterface::doBurstAccess(MemPacket* mem_pkt, Tick next_burst_at,
             static_cast<uint64_t>(stats.writeRowHits.value()),
             static_cast<uint64_t>(stats.writeBursts.value())
         );
+
     // Update bus state to reflect when previous command was issued
     return std::make_pair(cmd_at, cmd_at + burst_gap);
 }

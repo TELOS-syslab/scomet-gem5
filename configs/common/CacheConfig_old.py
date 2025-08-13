@@ -1,0 +1,640 @@
+# Copyright (c) 2012-2013, 2015-2016 ARM Limited
+# Copyright (c) 2020 Barkhausen Institut
+# All rights reserved
+#
+# The license below extends only to copyright in the software and shall
+# not be construed as granting a license to any other intellectual
+# property including but not limited to intellectual property relating
+# to a hardware implementation of the functionality of the software
+# licensed hereunder.  You may use the software subject to the license
+# terms below provided that you ensure that this notice is replicated
+# unmodified and in its entirety in all distributions of the software,
+# modified or unmodified, in source code or in binary form.
+#
+# Copyright (c) 2010 Advanced Micro Devices, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met: redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer;
+# redistributions in binary form must reproduce the above copyright
+# notice, this list of conditions and the following disclaimer in the
+# documentation and/or other materials provided with the distribution;
+# neither the name of the copyright holders nor the names of its
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# Configure the M5 cache hierarchy config in one place
+#
+
+import m5
+from m5.objects import *
+from common.Caches import *
+from common import ObjectList
+
+def _get_hwp(hwp_option):
+    if hwp_option == None:
+        return NULL
+
+    hwpClass = ObjectList.hwp_list.get(hwp_option)
+    return hwpClass()
+
+def _get_cache_opts(level, options):
+    opts = {}
+
+    size_attr = '{}_size'.format(level)
+    if hasattr(options, size_attr):
+        opts['size'] = getattr(options, size_attr)
+
+    assoc_attr = '{}_assoc'.format(level)
+    if hasattr(options, assoc_attr):
+        opts['assoc'] = getattr(options, assoc_attr)
+
+    prefetcher_attr = '{}_hwp_type'.format(level)
+    if hasattr(options, prefetcher_attr):
+        opts['prefetcher'] = _get_hwp(getattr(options, prefetcher_attr))
+
+    return opts
+
+def config_cache(options, system):
+    if options.external_memory_system and (options.caches or options.l2cache):
+        print("External caches and internal caches are exclusive options.\n")
+        sys.exit(1)
+
+    if options.external_memory_system:
+        ExternalCache = ExternalCacheFactory(options.external_memory_system)
+
+    if options.cpu_type == "O3_ARM_v7a_3":
+        try:
+            import cores.arm.O3_ARM_v7a as core
+        except:
+            print("O3_ARM_v7a_3 is unavailable. Did you compile the O3 model?")
+            sys.exit(1)
+
+        dcache_class, icache_class, l2_cache_class, walk_cache_class = \
+            core.O3_ARM_v7a_DCache, core.O3_ARM_v7a_ICache, \
+            core.O3_ARM_v7aL2, \
+            None
+    elif options.cpu_type == "HPI":
+        try:
+            import cores.arm.HPI as core
+        except:
+            print("HPI is unavailable.")
+            sys.exit(1)
+
+        dcache_class, icache_class, l2_cache_class, walk_cache_class = \
+            core.HPI_DCache, core.HPI_ICache, core.HPI_L2, None
+    else:
+        dcache_class, icache_class, l2_cache_class, walk_cache_class = \
+            L1_DCache, L1_ICache, L2Cache, None
+        l3_cache_class = L3Cache
+
+        if buildEnv['TARGET_ISA'] in ['x86', 'riscv']:
+            walk_cache_class = PageTableWalkerCache
+
+    # Set the cache line size of the system
+    system.cache_line_size = options.cacheline_size
+
+    # If elastic trace generation is enabled, make sure the memory system is
+    # minimal so that compute delays do not include memory access latencies.
+    # Configure the compulsory L1 caches for the O3CPU, do not configure
+    # any more caches.
+    if options.l2cache and options.elastic_trace_en:
+        fatal("When elastic trace is enabled, do not configure L2 caches.")
+
+    num_critical_cpu = getattr(options, 'latency_critical_num')
+    
+    MBAdict = {'100%': 0, '90%': 15, '80%': 40, '70%': 75,
+               '60%': 90, '50%': 140, '40%': 200, '30%': 350,
+               '20%': 600, '10%': 1000}
+    #Determinied by the average memory access latency (About 150 cycles)
+
+    #Shared llc
+    if options.l2cache or options.l3cache:
+        # Provide a clock for the L2 and the L1-to-L2 bus here as they
+        # are not connected using addTwoLevelCacheHierarchy. Use the
+        # same clock as the CPUs.
+        if options.l3cache:
+            if num_critical_cpu == 1:
+                system.tollcbus = L3XBar(clk_domain=system.cpu_clk_domain)
+                system.llc0 = l3_cache_class(**_get_cache_opts("l3c", options))
+                system.llc0.cpu_side = system.tollcbus.mem_side_ports
+                system.llc0.mem_side = system.membus.cpu_side_ports
+                system.llc0.tag_latency = int(system.llc0.tag_latency)
+
+                system.llc1 = l3_cache_class(**_get_cache_opts("l3b", options))
+                system.llc1.cpu_side = system.tollcbus.mem_side_ports
+                system.llc1.mem_side = system.membus.cpu_side_ports
+                system.llc1.tag_latency = int(system.llc1.tag_latency)
+
+                Test_mode = getattr(options, "test_mode")
+                if Test_mode == "MBA":
+                    MBACtrl = getattr(options, "MBACtrl")
+                    print("set MBA to ", MBACtrl)
+                    #    system.MBA = m5.objects.MBA()
+                    MBACycles = MBAdict[MBACtrl]
+                    system.llc1.tag_latency += MBACycles
+
+            elif num_critical_cpu == 3:
+                system.tollcbus = L3XBar(clk_domain=system.cpu_clk_domain)
+                system.llc0 = l3_cache_class(**_get_cache_opts("l3c", options))
+                system.llc0.cpu_side = system.tollcbus.mem_side_ports
+                system.llc0.mem_side = system.membus.cpu_side_ports
+                system.llc0.tag_latency = int(system.llc0.tag_latency)
+
+                system.llc1 = l3_cache_class(**_get_cache_opts("l3c", options))
+                system.llc1.cpu_side = system.tollcbus.mem_side_ports
+                system.llc1.mem_side = system.membus.cpu_side_ports
+                system.llc1.tag_latency = int(system.llc1.tag_latency)
+
+                system.llc2 = l3_cache_class(**_get_cache_opts("l3c", options))
+                system.llc2.cpu_side = system.tollcbus.mem_side_ports
+                system.llc2.mem_side = system.membus.cpu_side_ports
+                system.llc2.tag_latency = int(system.llc2.tag_latency)
+
+                system.llc3 = l3_cache_class(**_get_cache_opts('l3b', options))
+                system.llc3.cpu_side = system.tollcbus.mem_side_ports
+                system.llc3.mem_side = system.membus.cpu_side_ports
+                system.llc3.tag_latency = int(system.llc3.tag_latency)
+
+                Test_mode = getattr(options, "test_mode")
+                if Test_mode == "MBA":
+                    MBACtrl = getattr(options, "MBACtrl")
+                    print("set MBA to ", MBACtrl)
+                    #    system.MBA = m5.objects.MBA()
+                    MBACycles = MBAdict[MBACtrl]
+                    system.llc3.tag_latency += MBACycles
+
+            elif num_critical_cpu == 7:
+                system.tollcbus = L3XBar(clk_domain=system.cpu_clk_domain)
+                system.llc0 = l3_cache_class(**_get_cache_opts("l3c", options))
+                system.llc0.cpu_side = system.tollcbus.mem_side_ports
+                system.llc0.mem_side = system.membus.cpu_side_ports
+                system.llc0.tag_latency = int(system.llc0.tag_latency)
+
+                system.llc1 = l3_cache_class(**_get_cache_opts("l3c", options))
+                system.llc1.cpu_side = system.tollcbus.mem_side_ports
+                system.llc1.mem_side = system.membus.cpu_side_ports
+                system.llc1.tag_latency = int(system.llc1.tag_latency)
+
+                system.llc2 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc2.cpu_side = system.tollcbus.mem_side_ports
+                system.llc2.mem_side = system.membus.cpu_side_ports
+                system.llc2.tag_latency = int(system.llc2.tag_latency)
+
+                system.llc3 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc3.cpu_side = system.tollcbus.mem_side_ports
+                system.llc3.mem_side = system.membus.cpu_side_ports
+                system.llc3.tag_latency = int(system.llc3.tag_latency)
+                
+                system.llc4 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc4.cpu_side = system.tollcbus.mem_side_ports
+                system.llc4.mem_side = system.membus.cpu_side_ports
+                system.llc4.tag_latency = int(system.llc4.tag_latency)
+
+                system.llc5 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc5.cpu_side = system.tollcbus.mem_side_ports
+                system.llc5.mem_side = system.membus.cpu_side_ports
+                system.llc5.tag_latency = int(system.llc5.tag_latency)
+
+                system.llc6 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc6.cpu_side = system.tollcbus.mem_side_ports
+                system.llc6.mem_side = system.membus.cpu_side_ports
+                system.llc6.tag_latency = int(system.llc6.tag_latency)
+
+                system.llc7 = l3_cache_class(**_get_cache_opts('l3b', options))
+                system.llc7.cpu_side = system.tollcbus.mem_side_ports
+                system.llc7.mem_side = system.membus.cpu_side_ports
+                system.llc7.tag_latency = int(system.llc7.tag_latency)
+
+                Test_mode = getattr(options, "test_mode")
+                if Test_mode == "MBA":
+                    MBACtrl = getattr(options, "MBACtrl")
+                    print("set MBA to ", MBACtrl)
+                    #    system.MBA = m5.objects.MBA()
+                    MBACycles = MBAdict[MBACtrl]
+                    system.llc7.tag_latency += MBACycles
+
+            elif num_critical_cpu == 15:
+                system.tollcbus = L3XBar(clk_domain=system.cpu_clk_domain)
+                system.llc0 = l3_cache_class(**_get_cache_opts("l3c", options))
+                system.llc0.cpu_side = system.tollcbus.mem_side_ports
+                system.llc0.mem_side = system.membus.cpu_side_ports
+                system.llc0.tag_latency = int(system.llc0.tag_latency)
+
+                system.llc1 = l3_cache_class(**_get_cache_opts("l3c", options))
+                system.llc1.cpu_side = system.tollcbus.mem_side_ports
+                system.llc1.mem_side = system.membus.cpu_side_ports
+                system.llc1.tag_latency = int(system.llc1.tag_latency)
+
+                system.llc2 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc2.cpu_side = system.tollcbus.mem_side_ports
+                system.llc2.mem_side = system.membus.cpu_side_ports
+                system.llc2.tag_latency = int(system.llc2.tag_latency)
+
+                system.llc3 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc3.cpu_side = system.tollcbus.mem_side_ports
+                system.llc3.mem_side = system.membus.cpu_side_ports
+                system.llc3.tag_latency = int(system.llc3.tag_latency)
+                
+                system.llc4 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc4.cpu_side = system.tollcbus.mem_side_ports
+                system.llc4.mem_side = system.membus.cpu_side_ports
+                system.llc4.tag_latency = int(system.llc4.tag_latency)
+
+                system.llc5 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc5.cpu_side = system.tollcbus.mem_side_ports
+                system.llc5.mem_side = system.membus.cpu_side_ports
+                system.llc5.tag_latency = int(system.llc5.tag_latency)
+
+                system.llc6 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc6.cpu_side = system.tollcbus.mem_side_ports
+                system.llc6.mem_side = system.membus.cpu_side_ports
+                system.llc6.tag_latency = int(system.llc6.tag_latency)
+
+                system.llc7 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc7.cpu_side = system.tollcbus.mem_side_ports
+                system.llc7.mem_side = system.membus.cpu_side_ports
+                system.llc7.tag_latency = int(system.llc7.tag_latency)
+
+                system.llc8 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc8.cpu_side = system.tollcbus.mem_side_ports
+                system.llc8.mem_side = system.membus.cpu_side_ports
+                system.llc8.tag_latency = int(system.llc8.tag_latency)
+
+                system.llc9 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc9.cpu_side = system.tollcbus.mem_side_ports
+                system.llc9.mem_side = system.membus.cpu_side_ports
+                system.llc9.tag_latency = int(system.llc9.tag_latency)
+
+                system.llc10 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc10.cpu_side = system.tollcbus.mem_side_ports
+                system.llc10.mem_side = system.membus.cpu_side_ports
+                system.llc10.tag_latency = int(system.llc10.tag_latency)
+
+                system.llc11 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc11.cpu_side = system.tollcbus.mem_side_ports
+                system.llc11.mem_side = system.membus.cpu_side_ports
+                system.llc11.tag_latency = int(system.llc11.tag_latency)
+
+                system.llc12 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc12.cpu_side = system.tollcbus.mem_side_ports
+                system.llc12.mem_side = system.membus.cpu_side_ports
+                system.llc12.tag_latency = int(system.llc12.tag_latency)
+
+                system.llc13 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc13.cpu_side = system.tollcbus.mem_side_ports
+                system.llc13.mem_side = system.membus.cpu_side_ports
+                system.llc13.tag_latency = int(system.llc13.tag_latency)
+
+                system.llc14 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc14.cpu_side = system.tollcbus.mem_side_ports
+                system.llc14.mem_side = system.membus.cpu_side_ports
+                system.llc14.tag_latency = int(system.llc14.tag_latency)
+
+                system.llc15 = l3_cache_class(**_get_cache_opts('l3b', options))
+                system.llc15.cpu_side = system.tollcbus.mem_side_ports
+                system.llc15.mem_side = system.membus.cpu_side_ports
+                system.llc15.tag_latency = int(system.llc15.tag_latency)
+
+                Test_mode = getattr(options, "test_mode")
+                if Test_mode == "MBA":
+                    MBACtrl = getattr(options, "MBACtrl")
+                    print("set MBA to ", MBACtrl)
+                    #    system.MBA = m5.objects.MBA()
+                    MBACycles = MBAdict[MBACtrl]
+                    system.llc15.tag_latency += MBACycles
+
+            elif num_critical_cpu == 31:
+                system.tollcbus = L3XBar(clk_domain=system.cpu_clk_domain)
+                system.llc0 = l3_cache_class(**_get_cache_opts("l3c", options))
+                system.llc0.cpu_side = system.tollcbus.mem_side_ports
+                system.llc0.mem_side = system.membus.cpu_side_ports
+                system.llc0.tag_latency = int(system.llc0.tag_latency)
+
+                system.llc1 = l3_cache_class(**_get_cache_opts("l3c", options))
+                system.llc1.cpu_side = system.tollcbus.mem_side_ports
+                system.llc1.mem_side = system.membus.cpu_side_ports
+                system.llc1.tag_latency = int(system.llc1.tag_latency)
+
+                system.llc2 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc2.cpu_side = system.tollcbus.mem_side_ports
+                system.llc2.mem_side = system.membus.cpu_side_ports
+                system.llc2.tag_latency = int(system.llc2.tag_latency)
+
+                system.llc3 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc3.cpu_side = system.tollcbus.mem_side_ports
+                system.llc3.mem_side = system.membus.cpu_side_ports
+                system.llc3.tag_latency = int(system.llc3.tag_latency)
+                
+                system.llc4 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc4.cpu_side = system.tollcbus.mem_side_ports
+                system.llc4.mem_side = system.membus.cpu_side_ports
+                system.llc4.tag_latency = int(system.llc4.tag_latency)
+
+                system.llc5 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc5.cpu_side = system.tollcbus.mem_side_ports
+                system.llc5.mem_side = system.membus.cpu_side_ports
+                system.llc5.tag_latency = int(system.llc5.tag_latency)
+
+                system.llc6 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc6.cpu_side = system.tollcbus.mem_side_ports
+                system.llc6.mem_side = system.membus.cpu_side_ports
+                system.llc6.tag_latency = int(system.llc6.tag_latency)
+
+                system.llc7 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc7.cpu_side = system.tollcbus.mem_side_ports
+                system.llc7.mem_side = system.membus.cpu_side_ports
+                system.llc7.tag_latency = int(system.llc7.tag_latency)
+
+                system.llc8 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc8.cpu_side = system.tollcbus.mem_side_ports
+                system.llc8.mem_side = system.membus.cpu_side_ports
+                system.llc8.tag_latency = int(system.llc8.tag_latency)
+
+                system.llc9 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc9.cpu_side = system.tollcbus.mem_side_ports
+                system.llc9.mem_side = system.membus.cpu_side_ports
+                system.llc9.tag_latency = int(system.llc9.tag_latency)
+
+                system.llc10 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc10.cpu_side = system.tollcbus.mem_side_ports
+                system.llc10.mem_side = system.membus.cpu_side_ports
+                system.llc10.tag_latency = int(system.llc10.tag_latency)
+
+                system.llc11 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc11.cpu_side = system.tollcbus.mem_side_ports
+                system.llc11.mem_side = system.membus.cpu_side_ports
+                system.llc11.tag_latency = int(system.llc11.tag_latency)
+
+                system.llc12 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc12.cpu_side = system.tollcbus.mem_side_ports
+                system.llc12.mem_side = system.membus.cpu_side_ports
+                system.llc12.tag_latency = int(system.llc12.tag_latency)
+
+                system.llc13 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc13.cpu_side = system.tollcbus.mem_side_ports
+                system.llc13.mem_side = system.membus.cpu_side_ports
+                system.llc13.tag_latency = int(system.llc13.tag_latency)
+
+                system.llc14 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc14.cpu_side = system.tollcbus.mem_side_ports
+                system.llc14.mem_side = system.membus.cpu_side_ports
+                system.llc14.tag_latency = int(system.llc14.tag_latency)
+
+                system.llc15 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc15.cpu_side = system.tollcbus.mem_side_ports
+                system.llc15.mem_side = system.membus.cpu_side_ports
+                system.llc15.tag_latency = int(system.llc15.tag_latency)
+
+                system.llc16 = l3_cache_class(**_get_cache_opts("l3c", options))
+                system.llc16.cpu_side = system.tollcbus.mem_side_ports
+                system.llc16.mem_side = system.membus.cpu_side_ports
+                system.llc16.tag_latency = int(system.llc16.tag_latency)
+
+                system.llc17 = l3_cache_class(**_get_cache_opts("l3c", options))
+                system.llc17.cpu_side = system.tollcbus.mem_side_ports
+                system.llc17.mem_side = system.membus.cpu_side_ports
+                system.llc17.tag_latency = int(system.llc17.tag_latency)
+
+                system.llc18 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc18.cpu_side = system.tollcbus.mem_side_ports
+                system.llc18.mem_side = system.membus.cpu_side_ports
+                system.llc18.tag_latency = int(system.llc18.tag_latency)
+
+                system.llc19 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc19.cpu_side = system.tollcbus.mem_side_ports
+                system.llc19.mem_side = system.membus.cpu_side_ports
+                system.llc19.tag_latency = int(system.llc19.tag_latency)
+                
+                system.llc20 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc20.cpu_side = system.tollcbus.mem_side_ports
+                system.llc20.mem_side = system.membus.cpu_side_ports
+                system.llc20.tag_latency = int(system.llc20.tag_latency)
+
+                system.llc21 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc21.cpu_side = system.tollcbus.mem_side_ports
+                system.llc21.mem_side = system.membus.cpu_side_ports
+                system.llc21.tag_latency = int(system.llc21.tag_latency)
+
+                system.llc22 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc22.cpu_side = system.tollcbus.mem_side_ports
+                system.llc22.mem_side = system.membus.cpu_side_ports
+                system.llc22.tag_latency = int(system.llc22.tag_latency)
+
+                system.llc23 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc23.cpu_side = system.tollcbus.mem_side_ports
+                system.llc23.mem_side = system.membus.cpu_side_ports
+                system.llc23.tag_latency = int(system.llc23.tag_latency)
+
+                system.llc24 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc24.cpu_side = system.tollcbus.mem_side_ports
+                system.llc24.mem_side = system.membus.cpu_side_ports
+                system.llc24.tag_latency = int(system.llc24.tag_latency)
+
+                system.llc25 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc25.cpu_side = system.tollcbus.mem_side_ports
+                system.llc25.mem_side = system.membus.cpu_side_ports
+                system.llc25.tag_latency = int(system.llc25.tag_latency)
+
+                system.llc26 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc26.cpu_side = system.tollcbus.mem_side_ports
+                system.llc26.mem_side = system.membus.cpu_side_ports
+                system.llc26.tag_latency = int(system.llc26.tag_latency)
+
+                system.llc27 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc27.cpu_side = system.tollcbus.mem_side_ports
+                system.llc27.mem_side = system.membus.cpu_side_ports
+                system.llc27.tag_latency = int(system.llc27.tag_latency)
+
+                system.llc28 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc28.cpu_side = system.tollcbus.mem_side_ports
+                system.llc28.mem_side = system.membus.cpu_side_ports
+                system.llc28.tag_latency = int(system.llc28.tag_latency)
+
+                system.llc29 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc29.cpu_side = system.tollcbus.mem_side_ports
+                system.llc29.mem_side = system.membus.cpu_side_ports
+                system.llc29.tag_latency = int(system.llc29.tag_latency)
+
+                system.llc30 = l3_cache_class(**_get_cache_opts('l3c', options))
+                system.llc30.cpu_side = system.tollcbus.mem_side_ports
+                system.llc30.mem_side = system.membus.cpu_side_ports
+                system.llc30.tag_latency = int(system.llc30.tag_latency)
+
+                system.llc31 = l3_cache_class(**_get_cache_opts('l3b', options))
+                system.llc31.cpu_side = system.tollcbus.mem_side_ports
+                system.llc31.mem_side = system.membus.cpu_side_ports
+                system.llc31.tag_latency = int(system.llc31.tag_latency)
+
+                Test_mode = getattr(options, "test_mode")
+                if Test_mode == "MBA":
+                    MBACtrl = getattr(options, "MBACtrl")
+                    print("set MBA to ", MBACtrl)
+                    #    system.MBA = m5.objects.MBA()
+                    MBACycles = MBAdict[MBACtrl]
+                    system.llc31.tag_latency += MBACycles
+
+            else:
+                system.llc = l3_cache_class(clk_domain=system.cpu_clk_domain,
+                                   **_get_cache_opts('l3', options))
+                system.tollcbus = L3XBar(clk_domain = system.cpu_clk_domain)
+                system.llc.cpu_side = system.tollcbus.mem_side_ports
+                system.llc.mem_side = system.membus.cpu_side_ports
+        '''
+        elif options.l2cache:
+            system.llc = l2_cache_class(clk_domain=system.cpu_clk_domain,
+                                   **_get_cache_opts('l2', options))
+            system.tollcbus = L2XBar(clk_domain = system.cpu_clk_domain)
+            system.llc.cpu_side = system.tollcbus.mem_side_ports
+            system.llc.mem_side = system.membus.cpu_side_ports
+        '''
+
+    if options.memchecker:
+        system.memchecker = MemChecker()
+
+    #MBAid = 0
+    #MBAs =[]
+    for i in range(options.num_cpus):
+        if options.caches:
+            icache = icache_class(**_get_cache_opts('l1i', options))
+            dcache = dcache_class(**_get_cache_opts('l1d', options))
+
+            # If we have a walker cache specified, instantiate two
+            # instances here
+            if walk_cache_class:
+                iwalkcache = walk_cache_class()
+                dwalkcache = walk_cache_class()
+            else:
+                iwalkcache = None
+                dwalkcache = None
+
+            if options.memchecker:
+                dcache_mon = MemCheckerMonitor(warn_only=True)
+                dcache_real = dcache
+
+                # Do not pass the memchecker into the constructor of
+                # MemCheckerMonitor, as it would create a copy; we require
+                # exactly one MemChecker instance.
+                dcache_mon.memchecker = system.memchecker
+
+                # Connect monitor
+                dcache_mon.mem_side = dcache.cpu_side
+
+                # Let CPU connect to monitors
+                dcache = dcache_mon
+
+            # When connecting the caches, the clock is also inherited
+            # from the CPU in question
+
+            '''
+            #private L3
+            if options.l3cache:
+                l2cache = l2_cache_class(
+                                   **_get_cache_opts('l2', options))
+                num_critical_cpu = getattr(options, 'latency_critical_num')
+                #print("Num Critical CPU %d\n", num_critical_cpu)
+                if num_critical_cpu > 0:
+                    if i < num_critical_cpu:
+                        l3cache = l3_cache_class(
+                                        **_get_cache_opts('l3c', options))
+                    else:
+                        l3cache = l3_cache_class(
+                                        **_get_cache_opts('l3b', options))
+                else:
+                    l3cache = l3_cache_class(
+                                        **_get_cache_opts('l3', options))
+                system.cpu[i].addThreeLevelCacheHierarchy(icache, dcache,
+                                            l2cache, l3cache, iwalkcache, dwalkcache)
+            elif options.l2cache:
+                l2cache = l2_cache_class(
+                                   **_get_cache_opts('l2', options))
+                system.cpu[i].addTwoLevelCacheHierarchy(icache, dcache,
+                                            l2cache, iwalkcache, dwalkcache)
+            else:
+                system.cpu[i].addPrivateSplitL1Caches(icache, dcache,
+                                                  iwalkcache, dwalkcache)
+            '''
+            #shared llc
+            if options.l2cache and options.l3cache:
+                l2cache = l2_cache_class(
+                                   **_get_cache_opts('l2', options))
+                system.cpu[i].addTwoLevelCacheHierarchy(icache, dcache,
+                                            l2cache, iwalkcache, dwalkcache)
+            else:
+                system.cpu[i].addPrivateSplitL1Caches(icache, dcache,
+                                                  iwalkcache, dwalkcache)
+
+            if options.memchecker:
+                # The mem_side ports of the caches haven't been connected yet.
+                # Make sure connectAllPorts connects the right objects.
+                system.cpu[i].dcache = dcache_real
+                system.cpu[i].dcache_mon = dcache_mon
+
+        elif options.external_memory_system:
+            # These port names are presented to whatever 'external' system
+            # gem5 is connecting to.  Its configuration will likely depend
+            # on these names.  For simplicity, we would advise configuring
+            # it to use this naming scheme; if this isn't possible, change
+            # the names below.
+            if buildEnv['TARGET_ISA'] in ['x86', 'arm', 'riscv']:
+                system.cpu[i].addPrivateSplitL1Caches(
+                        ExternalCache("cpu%d.icache" % i),
+                        ExternalCache("cpu%d.dcache" % i),
+                        ExternalCache("cpu%d.itb_walker_cache" % i),
+                        ExternalCache("cpu%d.dtb_walker_cache" % i))
+            else:
+                system.cpu[i].addPrivateSplitL1Caches(
+                        ExternalCache("cpu%d.icache" % i),
+                        ExternalCache("cpu%d.dcache" % i))
+
+        system.cpu[i].createInterruptController()
+        #system.cpu[i].connectBus(system.membus)
+        
+        #Shared LLC
+        if options.l2cache or options.l3cache:
+            system.cpu[i].l2cache.mem_side = system.tollcbus.cpu_side_ports
+            #system.cpu[i].connectAllPorts(
+            #    system.tollcbus.cpu_side_ports,
+            #    system.membus.cpu_side_ports, system.membus.mem_side_ports)                
+        elif options.external_memory_system:
+            system.cpu[i].connectUncachedPorts(
+                system.membus.cpu_side_ports, system.membus.mem_side_ports)
+        else:
+            system.cpu[i].connectBus(system.membus)
+
+    return system
+
+# ExternalSlave provides a "port", but when that port connects to a cache,
+# the connecting CPU SimObject wants to refer to its "cpu_side".
+# The 'ExternalCache' class provides this adaptation by rewriting the name,
+# eliminating distracting changes elsewhere in the config code.
+class ExternalCache(ExternalSlave):
+    def __getattr__(cls, attr):
+        if (attr == "cpu_side"):
+            attr = "port"
+        return super(ExternalSlave, cls).__getattr__(attr)
+
+    def __setattr__(cls, attr, value):
+        if (attr == "cpu_side"):
+            attr = "port"
+        return super(ExternalSlave, cls).__setattr__(attr, value)
+
+def ExternalCacheFactory(port_type):
+    def make(name):
+        return ExternalCache(port_data=name, port_type=port_type,
+                             addr_ranges=[AllMemory])
+    return make

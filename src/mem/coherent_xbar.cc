@@ -169,8 +169,9 @@ CoherentXBar::recvTimingReq(PacketPtr pkt, PortID cpu_side_port_id)
     else {
         if (AddrRouteTo.find(pkt->getAddr()) == AddrRouteTo.end()) {
             PortID BE_port = mem_port_count - 1;
-            mem_side_port_id =
-            (cpu_side_port_id < BE_port) ? cpu_side_port_id : BE_port;
+            unsigned int cpu_port_count = cpuSidePorts.size();
+            // mem_side_port_id = (cpu_side_port_id < BE_port) ? cpu_side_port_id : BE_port;
+            mem_side_port_id = (cpu_side_port_id < cpu_port_count - 1) ? 0 : BE_port;
             AddrRouteTo[pkt->getAddr()] = mem_side_port_id;
         }
         else {
@@ -865,8 +866,9 @@ CoherentXBar::recvAtomicBackdoor(PacketPtr pkt, PortID cpu_side_port_id,
     else {
         if (AddrRouteTo.find(pkt->getAddr()) == AddrRouteTo.end()) {
             PortID BE_port = mem_port_count - 1;
-            mem_side_port_id =
-            (cpu_side_port_id < BE_port) ? cpu_side_port_id : BE_port;
+            unsigned int cpu_port_count = cpuSidePorts.size();
+            // mem_side_port_id = (cpu_side_port_id < BE_port) ? cpu_side_port_id : BE_port;
+            mem_side_port_id = (cpu_side_port_id < cpu_port_count - 1) ? 0 : BE_port;
             AddrRouteTo[pkt->getAddr()] = mem_side_port_id;
         }
         else {
@@ -1111,8 +1113,9 @@ CoherentXBar::recvFunctional(PacketPtr pkt, PortID cpu_side_port_id)
         else {
             if (AddrRouteTo.find(pkt->getAddr()) == AddrRouteTo.end()) {
                 PortID BE_port = mem_port_count - 1;
-                dest_id =
-                (cpu_side_port_id < BE_port) ? cpu_side_port_id : BE_port;
+                unsigned int cpu_port_count = cpuSidePorts.size();
+                // mem_side_port_id = (cpu_side_port_id < BE_port) ? cpu_side_port_id : BE_port;
+                dest_id = (cpu_side_port_id < cpu_port_count - 1) ? 0 : BE_port;
                 AddrRouteTo[pkt->getAddr()] = dest_id;
             }
             else {
